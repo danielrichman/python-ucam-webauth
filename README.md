@@ -1,4 +1,4 @@
-# python-raven - Ucam-webauth and Raven client in Python
+# python-raven - Ucam-webauth and Raven application agent in Python
 
 ## Python dependencies
 

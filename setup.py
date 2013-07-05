@@ -10,7 +10,7 @@ setup(
 
     author = "Daniel Richman",
     author_email = "main@danielrichman.co.uk",
-    description = "Ucam-webauth and Raven client in Python",
+    description = "Ucam-webauth and Raven application agent in Python",
     license="GNU Lesser General Public License Version 3",
     keywords = "Raven Cambridge ucam-webauth",
     url = "http://github.com/danielrichman/python-raven",
