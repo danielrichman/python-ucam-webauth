@@ -1,1 +1,3 @@
 *.pyc
+dist
+python_raven.egg-info
