@@ -21,7 +21,7 @@ TODO
 ```python
 from raven import Request, Response
 
-r = raven.Request(url="http://host/response/path", desc="My website")
+r = Request(url="http://host/response/path", desc="My website")
 # str(r) == "https://raven.cam.ac.uk/auth/authenticate.html?" \
 #           "url=http%3A%2F%2Fhost%2Fresponse%2Fpath&ver=3&desc=My+website"
 redirect(str(r))
