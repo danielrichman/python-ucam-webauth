@@ -1,0 +1,22 @@
+<html>
+    <body>
+
+<p>
+    <code>
+        {{ module }}.Request({{ args_str }})
+    </code>
+</p>
+
+<p>
+    {{ repr(request) }} <br />
+    {% if module != "ucam_webauth" %}
+        <a href="{{ request }}">{{ request }}</a>
+    {% else %}
+        {{ request }} 
+    {% endif %} 
+</p>
+
+<p><a href='{{ url_for("home") }}'>Home</a></p>
+
+    </body>
+</html>

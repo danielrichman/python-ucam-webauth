@@ -1,0 +1,75 @@
+<html>
+    <body>
+
+<form method="POST" action="{{ url_for('request_build') }}">
+
+    <p>
+        <label for="module">class</label>
+        <select name="module" id="module">
+            <option value="ucam_webauth">ucam_webauth.Request</option>
+            <option value="raven">raven.Request</option>
+            <option value="raven.demoserver">raven.demoserver.Request</option>
+        </select>
+    </p>
+
+    <p>
+        <label for="desc">desc</label>
+        <input type="text" id="desc" name="desc">
+    </p>
+
+    <p>
+        <label for="aauth">aauth = </label>
+
+        <label for="aauth_none">
+            <input type="radio" name="aauth" value="" id="aauth_none" checked>
+            none
+        </label>
+        <label for="aauth_pwd">
+            <input type="radio" name="aauth" value="pwd" id="aauth_pwd">
+            pwd
+        </label>
+    </p>
+
+    <p>
+        <label for="iact">iact</label>
+        <select name="iact">
+            <option></option>
+            <option>yes</option>
+            <option>no</option>
+        </select>
+    </p>
+
+    <p>
+        <label for="msg">msg</label>
+        <input type="text" id="msg" name="msg">
+    </p>
+
+    <p>
+        <label for="params">params</label>
+        <input type="text" id="params" name="params">
+    </p>
+
+    <p>
+        <label for="fail">
+            <input type="checkbox" name="fail" value="yes" id="fail">
+            fail
+        </label>
+    </p>
+
+    <p>
+        <label for="redirect">
+            <input type="checkbox" name="redirect" value="yes" id="redirect">
+            redirect immediately
+        </label>
+    </p>
+    
+
+    <p>
+        <button type="submit">Build request</button>
+    </p>
+</form>
+
+<p><a href='{{ url_for("home") }}'>Home</a></p>
+
+    </body>
+</html>
