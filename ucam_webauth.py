@@ -76,6 +76,8 @@ class AuthenticationType(object):
         return self.name
     def __repr__(self):
         return "<ucam_webauth.AuthenticationType {0}>".format(self.name)
+    def __hash__(self):
+        return hash(self.name)
     def __eq__(self, other):
         if isinstance(other, AuthenticationType):
             return self.name == other.name
@@ -108,6 +110,8 @@ class Status(object):
         return self.name
     def __repr__(self):
         return "<ucam_webauth.Status {0} {1}>".format(self.code, self.name)
+    def __hash__(self):
+        return hash(self.code)
     def __eq__(self, other):
         if isinstance(other, Status):
             return self.code == other.code

@@ -51,3 +51,9 @@ class TestAuthenticationType(object):
 
     def test_constants(self):
         assert ucam_webauth.ATYPE_PWD == "pwd"
+
+    def test_list_equality(self):
+        assert [ucam_webauth.ATYPE_PWD] == ["pwd"]
+
+    def test_set_equality(self):
+        assert set([ucam_webauth.ATYPE_PWD]) == set(["pwd"])
