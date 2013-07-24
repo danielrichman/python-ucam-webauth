@@ -130,7 +130,7 @@ STATUS_CODE_LIST = (
     Status(520, "unsupported_version", "Unsupported protocol version"),
     Status(530, "bad_request", "General request parameter error"),
     Status(540, "interaction_required", "Interaction would be required"),
-    Status(560, "waa_not_authorized", "Interaction would be required"),
+    Status(560, "waa_not_authorised", "Interaction would be required"),
     Status(570, "authentication_declined",
         "The WLS declines to provide authentication services on this occasion")
 )

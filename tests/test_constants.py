@@ -27,7 +27,7 @@ class TestStatus(object):
         assert ucam_webauth.STATUS_UNSUPPORTED_VERSION == 520
         assert ucam_webauth.STATUS_BAD_REQUEST == 530
         assert ucam_webauth.STATUS_INTERACTION_REQUIRED == 540
-        assert ucam_webauth.STATUS_WAA_NOT_AUTHORIZED == 560
+        assert ucam_webauth.STATUS_WAA_NOT_AUTHORISED == 560
         assert ucam_webauth.STATUS_AUTHENTICATION_DECLINED == 570
 
 class TestAuthenticationType(object):
