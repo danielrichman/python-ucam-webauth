@@ -1,11 +1,15 @@
+import os
 import inspect
 
 import ucam_webauth
 import raven
 import raven.demoserver
+import raven.flask_glue
 
 from flask import Flask, request, render_template, redirect, url_for, abort
 app = Flask(__name__)
+
+app.config["SECRET_KEY"] = os.urandom(16)
 
 app.add_template_global(repr, name="repr")
 app.add_template_global(getattr, name="getattr")
@@ -13,9 +17,18 @@ app.add_template_global(getattr, name="getattr")
 modules = {"ucam_webauth": ucam_webauth,
            "raven": raven, "raven.demoserver": raven.demoserver}
 
+auth_decorator = raven.flask_glue.AuthDecorator()
+
 @app.route("/")
 def home():
-    return redirect(url_for("request_form"))
+    return render_template("home.html")
+
+@app.route("/decorated")
+@auth_decorator
+def decorated():
+    return "principal: {a.principal}, ptags: {a.ptags}, " \
+            "issue: {a.issue}, life: {a.life}" \
+                .format(a=auth_decorator)
 
 @app.route("/request/new")
 def request_form():

@@ -7,6 +7,8 @@ setup(
     py_modules = ["ucam_webauth"],
     package_data = {"raven": ["keys/pubkey*.crt"]},
     install_requires = ["M2Crypto", "setuptools"],
+    extras_require = {"tests": ["nosetests"],
+                      "simple_demo": ["Flask>=0.10"]}
 
     author = "Daniel Richman",
     author_email = "main@danielrichman.co.uk",
