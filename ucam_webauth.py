@@ -211,6 +211,9 @@ class Request(object):
         if not (iact is True or iact is False or iact is None):
             raise ValueError("iact should be True, False or None")
 
+        if aauth == set():
+            raise ValueError("aauth may not be the empty set")
+
         self.ver = 3
         self.url = url
         self.desc = desc
@@ -576,3 +579,35 @@ class Response(object):
                 if getattr(self, key) is not None:
                     raise ValueError("Failed, yet {0} is not empty"
                                         .format(key))
+
+    def check_iact_aauth(self, iact, aauth):
+        if iact is True:
+            # must have authenticated just now:
+            if self.auth is None:
+                return False
+
+            # further, must have used one of the allowed methods
+            if aauth is not None and self.auth not in aauth:
+                return False
+
+            return True
+
+        elif iact is False:
+            # shouldn't have just authenticated
+            if self.auth is not None:
+                return False
+
+            # but should have used one of the previous auth methods
+            if aauth is not None and aauth & self.sso == set():
+                return False
+
+            return True
+
+        else:
+            # must have authenticated somehow at some point
+            # (self.auth is not None or self.sso != set() is checked in
+            # _sanity_check)
+            # ... using an allowed method
+            return aauth is None or \
+                    self.auth in aauth or \
+                    aauth & self.sso != set()

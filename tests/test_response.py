@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 import os.path
 import string
 import base64
+import itertools
 from datetime import datetime
 from hashlib import sha1
 from M2Crypto.RSA import gen_key, new_pub_key, load_key
@@ -32,6 +33,11 @@ class Response_OldPtags(Response_NoVerify):
 class Response_KeysAB(ucam_webauth.Response):
     old_version_ptags = set()
     keys = _pubkeys("ab")
+
+class Response_MoreATypes(Response_NoVerify):
+    @classmethod
+    def _atype_obj(cls, auth):
+        return auth
 
 
 class TestResponse(object):
@@ -143,7 +149,7 @@ class TestResponse(object):
             response = rcls(string)
         else:
             response = ucam_webauth.Response(string)
-  
+
         # don't check kid, or sig so that other tests can use
         # **extra to test simple variants on this string
 
@@ -302,6 +308,55 @@ class TestResponse(object):
         response = self.test_parses_simple_success_string(
                         ver=1, rcls=Response_OldPtags)
         assert response.ptags == set(["config1", "config2"])
+
+    def test_future_atypes(self):
+        string = self.respstr(status="200",
+                    issue="20130701T102345Z", id="unique",
+                    url="http://drichman.net/example",
+                    principal="djr61", auth="wand", sso="tst,trumpet")
+        response = Response_MoreATypes(string)
+        assert response.auth == "wand"
+        assert response.sso == set(["tst", "trumpet"])
+
+    def test_check_iact_aauth(self):
+        auth = ("", "pwd", "tst")
+        sso = ("", "pwd", "tst", "pwd,tst")
+        iact = (True, False, None)
+        aauth = (None, set(["pwd"]))
+
+        cases = list(itertools.product(auth, sso, iact, aauth))
+
+        # aauth = None,  pwd    None,  pwd    None,  pwd
+        # iact =  True          False         None          # auth, sso
+        expect = (None,  None,  None,  None,  None,  None,  # "", ""
+                  False, False, True,  True,  True,  True,  # "", "pwd"
+                  False, False, True,  False, True,  False, # "", "tst"
+                  False, False, True,  True,  True,  True,  # "", "pwd,tst"
+
+                  True,  True,  False, False, True,  True,  # "pwd", ""
+                  True,  True,  False, False, True,  True,  # "pwd", "pwd"
+                  True,  True,  False, False, True,  True,  # "pwd", "tst"
+                  True,  True,  False, False, True,  True,  # "pwd", "pwd,tst"
+
+                  True,  False, False, False, True,  False, # "tst", ""
+                  True,  False, False, False, True,  True,  # "tst", "pwd"
+                  True,  False, False, False, True,  False, # "tst", "tst"
+                  True,  False, False, False, True,  True)  # "tst", "pwd,tst"
+
+        for (c_auth, c_sso, c_iact, c_aauth), c_expect in zip(cases, expect):
+            string = self.respstr(status="200",
+                        issue="20130701T102345Z", id="unique",
+                        url="http://drichman.net/example",
+                        principal="djr61", auth=c_auth, sso=c_sso)
+
+            if c_expect is None:
+                assert_raises(ValueError, Response_MoreATypes, string)
+            else:
+                response = Response_MoreATypes(string)
+                result = response.check_iact_aauth(c_iact, c_aauth)
+                m = "failed: auth={0} sso={1} iact={2} aauth={3} expect={4}" \
+                        .format(c_auth, c_sso, c_iact, c_aauth, c_expect)
+                assert result is c_expect, m
 
     def test_raven_demoserver(self):
         response = raven.demoserver.Response(
