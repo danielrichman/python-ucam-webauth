@@ -65,6 +65,7 @@ class FakeResponse(ucam_webauth.Response):
 class AuthDecorator(ucam_webauth.flask_glue.AuthDecorator):
     request_class = FakeRequest
     response_class = FakeResponse
+    logout_url = "http://localhost/wls_logout"
 
 class WLS(object):
     def __init__(self):
@@ -121,6 +122,7 @@ class TestRig(object):
         self.app.add_url_rule('/fake_wls', 'wls', self.wls)
         self.app.add_url_rule('/decorated', 'decorated', view)
         self.app.add_url_rule('/decorated/<view_arg>', 'decorated', view)
+        self.app.add_url_rule('/logout', 'logout', self.authdecorator.logout)
 
         self.client = self.app.test_client()
         self.active = False
@@ -769,3 +771,20 @@ class TestAuthDecorator(object):
 
             r = client.get("/decorated", follow_redirects=True)
             assert r.status_code == 400
+
+    def test_logout(self):
+        rig = TestRig()
+        self.check_auth(rig)
+
+        with rig.session_transaction() as session:
+            assert session["_ucam_webauth"]
+
+        with rig as (client, wls, views):
+            r = client.get("/logout")
+            assert r.status_code == 303
+            assert r.headers["location"] == "http://localhost/wls_logout"
+
+        with rig.session_transaction() as session:
+            assert "_ucam_webauth" not in session
+
+        self.check_auth(rig)

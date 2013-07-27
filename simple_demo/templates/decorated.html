@@ -1,0 +1,24 @@
+<html>
+    <body>
+
+<ul>
+    <li><b>principal</b>: {{ a.principal }}</li>
+    <li><b>ptags</b>: {{ a.ptags|join(', ') }}</li>
+    <li><b>issue</b>: {{ a.issue }}</li>
+    <li><b>life</b>: {{ a.life }}</li>
+    <li><b>last</b>: {{ a.last }}</li>
+    <li><b>expires</b>: {{ a.expires }}</li>
+    <li>
+        <b>expires_all</b>:
+        <ul>
+            {% for reason, when in a.expires_all %}
+                <li>{{ reason }}: {{ when }}</li>
+            {% endfor %}
+        </ul>
+    </li>
+</ul>
+
+<p><a href="{{ url_for('decorated_logout') }}">logout</a></p>
+
+    </body>
+</html>

@@ -16,8 +16,9 @@
 # along with python-raven.  If not, see <http://www.gnu.org/licenses/>.
 
 import ucam_webauth.flask_glue
-from . import Request, Response
+from . import Request, Response, RAVEN_LOGOUT
 
 class AuthDecorator(ucam_webauth.flask_glue.AuthDecorator):
     request_class = Request
     response_class = Response
+    logout_url = RAVEN_LOGOUT

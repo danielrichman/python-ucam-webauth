@@ -27,13 +27,10 @@ def home():
 @app.route("/decorated")
 @auth_decorator
 def decorated():
-    return "<pre>" \
-            "principal: {a.principal}, ptags: {a.ptags}, \n" \
-            "issue: {a.issue}, life: {a.life}, \n" \
-            "last: {a.last}, expires: {a.expires}, \n"\
-            "expires_all: {a.expires_all}" \
-            "</pre>" \
-                .format(a=auth_decorator)
+    return render_template("decorated.html", a=auth_decorator)
+
+app.add_url_rule('/decorated/logout', 'decorated_logout',
+                 auth_decorator.logout)
 
 @app.route("/request/new")
 def request_form():

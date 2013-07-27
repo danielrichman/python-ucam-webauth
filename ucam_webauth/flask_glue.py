@@ -33,8 +33,8 @@ class AuthDecorator(object):
     """
     An instance of this class decorates views to add authentication.
 
-    To use it, you'll need to subclass it and set response_class and
-    request_class (See raven.flask.AuthDecorator). Then,
+    To use it, you'll need to subclass it and set response_class,
+    request_class and logout_url (see raven.flask.AuthDecorator). Then,
 
         auth_decorator = AuthDecorator(your settings)
 
@@ -106,8 +106,8 @@ class AuthDecorator(object):
         call and return the value of auth_decorator.logout().
 
         The call will clear the session state, and logout() returns a redirect
-        to the Raven logout page. Be aware of the fact the opportunity for
-        replay attacks when using the default flask session handlers.
+        to the Raven logout page. Be aware that the default flask session
+        handlers are susceptible to replay attacks.
 
     Session expiration
 
@@ -124,6 +124,7 @@ class AuthDecorator(object):
 
     request_class = None
     response_class = None
+    logout_url = None
 
     def __init__(self, desc=None, aauth=None, iact=None, msg=None,
                     max_life=7200, use_wls_life=False,
@@ -192,6 +193,12 @@ class AuthDecorator(object):
         if "principal" not in state:
             return None
         return self._get_expires(state)
+
+    def logout(self):
+        if "_ucam_webauth" in session:
+            session.modified = True
+            del session["_ucam_webauth"]
+        return redirect(self.logout_url, code=303)
 
     def _wrapped(self, view_function, view_args):
         # we always modify the session. Changes to mutable objects (our
