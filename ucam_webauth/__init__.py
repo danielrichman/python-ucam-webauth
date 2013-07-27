@@ -215,7 +215,7 @@ class Request(object):
         if not (iact is True or iact is False or iact is None):
             raise ValueError("iact should be True, False or None")
 
-        if aauth == set():
+        if aauth == frozenset():
             raise ValueError("aauth may not be the empty set")
 
         self.ver = 3
@@ -352,7 +352,7 @@ class Response(object):
                         "params", "kid", "sig")
     _b64_trans = maketrans("-._", "+/=")
 
-    old_version_ptags = set()
+    old_version_ptags = frozenset()
     keys = {}
 
     def __init__(self, string):
@@ -436,10 +436,11 @@ class Response(object):
         # comma_separated: ptags, sso, required/optional checked in _fixup
         for key in ("ptags", "sso"):
             if getattr(self, key) == '':
-                setattr(self, key, set())
+                setattr(self, key, frozenset())
             else:
                 encoded_strings = getattr(self, key).split(',')
-                strings = set(self._decode_value(s) for s in encoded_strings)
+                strings = frozenset(self._decode_value(s)
+                                    for s in encoded_strings)
                 setattr(self, key, strings)
 
         # optional integer, required empty checked in _sanity_check
@@ -513,7 +514,7 @@ class Response(object):
             if self.ver < 3:
                 self.ptags = self.old_version_ptags
 
-            self.sso = set(self._atype_obj(a) for a in self.sso)
+            self.sso = frozenset(self._atype_obj(a) for a in self.sso)
 
         else:
             if self.ptags != set():

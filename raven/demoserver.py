@@ -49,5 +49,5 @@ class Request(ucam_webauth.Request):
 class Response(ucam_webauth.Response):
     """ucam_webauth.Response, configured for the Raven demo server"""
 
-    old_version_ptags = set(["current"])
+    old_version_ptags = frozenset(["current"])
     keys = {"901": PUBKEY901}

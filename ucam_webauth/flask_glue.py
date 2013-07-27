@@ -128,7 +128,8 @@ class AuthDecorator(object):
     def __init__(self, desc=None, aauth=None, iact=None, msg=None,
                     max_life=7200, use_wls_life=False,
                     inactive_timeout=None, issue_bounds=(15,5),
-                    require_principal=None, require_ptags=set(["current"])):
+                    require_principal=None,
+                    require_ptags=frozenset(["current"])):
         # TODO handle POST 
 
         self.desc = desc
@@ -159,7 +160,7 @@ class AuthDecorator(object):
     def ptags(self):
         ptags = self._prop_helper("ptags")
         if ptags is not None:
-            ptags = set(ptags)
+            ptags = frozenset(ptags)
         return ptags
 
     @property
@@ -229,7 +230,8 @@ class AuthDecorator(object):
             logger.info("session expired (%s): redirecting to WLS", reason)
             return self._redirect_to_wls()
 
-        if not self.check_authorised(state["principal"], set(state["ptags"])):
+        if not self.check_authorised(state["principal"],
+                                     frozenset(state["ptags"])):
             logger.info("not authorised: bad principal (%s) or ptags (%r)",
                         state["principal"], state["ptags"])
             abort(403)
@@ -324,7 +326,7 @@ class AuthDecorator(object):
             return False
 
         principal = state["principal"]
-        ptags = set(state["ptags"])
+        ptags = frozenset(state["ptags"])
         return response.principal == principal and response.ptags == ptags
 
     def _redirect_to_wls(self):
