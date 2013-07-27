@@ -46,6 +46,10 @@ class TestRequest(object):
                             url="http://drichman.net/example",
                             encode_strings=False, **{key: "asdf \x14 dfgh"})
 
+    def test_rejects_empty_aauth(self):
+        assert_raises(ValueError, Request, url="http://drichman.net/example",
+                                           aauth=set())
+
     def test_aauth(self):
         request = str(Request(url="http://drichman.net/example",
                               aauth=set([ATYPE_PWD])))
