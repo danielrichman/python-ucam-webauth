@@ -12,9 +12,15 @@ class TestStatus(object):
         b = ucam_webauth.Status(123, "other", "different description")
         c = ucam_webauth.Status(456, "fake", "example description")
         assert a == b
+        assert not (a != b)
         assert a == 123 and 123 == a
+        assert not a != 123 and not 123 != a
         assert a != c and c != a
+        assert not a == c and not c == a
         assert a != 456 and 456 != a
+        assert not a == 456 and not 456 == a
+        assert a != "fake"
+        assert not a == "fake"
 
     def test_int(self):
         const = ucam_webauth.Status(123, "fake", "example description")
@@ -41,9 +47,13 @@ class TestAuthenticationType(object):
         b = ucam_webauth.AuthenticationType("test", "different description")
         c = ucam_webauth.AuthenticationType("other", "some description")
         assert a == b
+        assert not a != b
         assert a == "test" and "test" == a
+        assert not a != "test" and not "test" != a
         assert a != c and c != a
+        assert not a == c and not c == a
         assert a != "other" and "other" != a
+        assert not a == "other" and not "other" == a
 
     def test_str(self):
         const = ucam_webauth.AuthenticationType("test", "some description")

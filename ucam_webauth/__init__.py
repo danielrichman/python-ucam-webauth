@@ -83,6 +83,8 @@ class AuthenticationType(object):
             return self.name == other.name
         else:
             return self.name == other
+    def __ne__(self, other):
+        return not self == other
 
 ATYPE_PWD = AuthenticationType("pwd", "Username and password")
 
@@ -119,6 +121,8 @@ class Status(object):
             return self.code == other
         else:
             return False
+    def __ne__(self, other):
+        return not self == other
 
 class ErrorStatus(Status, Exception):
     """A Status that is not 'success' (200)"""
