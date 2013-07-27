@@ -15,16 +15,19 @@
 # You should have received a copy of the GNU General Public License
 # along with python-raven.  If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import unicode_literals
+
 import logging
 import functools
+import urllib
 
-from datetime import datetime, timedelta
+from calendar import timegm
 from time import time as time_float
 time = lambda: int(time_float())
 
-from flask import request, session, redirect, url_for, abort
+from flask import request, session, redirect, abort
 
-logger = logging.getLogger("ucam_webauth.flask")
+logger = logging.getLogger("ucam_webauth.flask_glue")
 
 class AuthDecorator(object):
     """
@@ -89,8 +92,8 @@ class AuthDecorator(object):
         issue_bounds=(clock_skew + response_time, clock_skew) is equivalent)
       - require_principal: (set of strings; None for no restriction) require
         the principal to be in the set
-      - require_ptags: (set of strings) require the ptags to contain every
-        string in require_ptags
+      - require_ptags: (set of strings) require the ptags to contain _any_
+        string in require_ptags (non empty intersection)
 
     More complex customisation:
 
@@ -126,6 +129,8 @@ class AuthDecorator(object):
                     max_life=7200, use_wls_life=False,
                     inactive_timeout=None, issue_bounds=(15,5),
                     require_principal=None, require_ptags=set(["current"])):
+        # TODO handle POST 
+
         self.desc = desc
         self.aauth = aauth
         self.iact = iact
@@ -143,29 +148,61 @@ class AuthDecorator(object):
         functools.update_wrapper(wrapper, view_function)
         return wrapper
 
+    def _prop_helper(self, name):
+        return session.get("_ucam_webauth", {}).get(name, None)
+
     @property
     def principal(self):
-        return session.get("_ucam_webauth", {}).get("principal", None)
+        return self._prop_helper("principal")
 
     @property
     def ptags(self):
-        ptags = session.get("_ucam_webauth", {}).get("ptags", None)
+        ptags = self._prop_helper("ptags")
         if ptags is not None:
             ptags = set(ptags)
         return ptags
 
     @property
     def issue(self):
-        return session.get("_ucam_webauth", {}).get("issue", None)
+        return self._prop_helper("issue")
 
     @property
     def life(self):
-        return session.get("_ucam_webauth", {}).get("life", None)
+        return self._prop_helper("life")
+
+    @property
+    def last(self):
+        return self._prop_helper("last")
+
+    @property
+    def expires(self):
+        state = session.get("_ucam_webauth", {})
+        if "principal" not in state:
+            return None
+        expires = self._get_expires(state)
+        if len(expires) == 0:
+            return None
+        else:
+            return min(when for reason, when in expires)
+
+    @property
+    def expires_all(self):
+        state = session.get("_ucam_webauth", {})
+        if "principal" not in state:
+            return None
+        return self._get_expires(state)
 
     def _wrapped(self, view_function, view_args):
+        # we always modify the session. Changes to mutable objects (our
+        # state dict) arn't automatically picked up
+        session.modified = True
+
         if "WLS-Response" in request.args:
             if request.method != "GET":
                 abort(405)
+            if len(request.args.getlist("WLS-Response")) != 1:
+                abort(400)
+
             if "_ucam_webauth" not in session:
                 # we set this before redirecting - so the user has cookies
                 # disabled. avoid a redirect loop
@@ -187,12 +224,9 @@ class AuthDecorator(object):
             logger.info("unauthenticated: redirecting to WLS")
             return self._redirect_to_wls()
 
-        if not self._check_life(state):
-            logger.info("session expired (life): redirecting to WLS")
-            return self._redirect_to_wls()
-
-        if not self._check_inactive(state):
-            logger.info("session expired (inactivity): redirecting to WLS")
+        ok, reason = self._check_expires(state)
+        if not ok:
+            logger.info("session expired (%s): redirecting to WLS", reason)
             return self._redirect_to_wls()
 
         if not self.check_authorised(state["principal"], set(state["ptags"])):
@@ -205,6 +239,10 @@ class AuthDecorator(object):
         return view_function(**view_args)
 
     def _handle_response(self, response):
+        url_without_response = self._check_url(response.url)
+        if url_without_response is None:
+            abort(400)
+
         if response.success:
             if not response.check_iact_aauth(self.iact, self.aauth):
                 logger.warning("response.check_iact failed: "
@@ -213,34 +251,74 @@ class AuthDecorator(object):
                                self.iact, self.aauth)
                 abort(400)
 
-            if not self._check_issue(response):
+            issue = timegm(response.issue.timetuple())
+            if not self._check_issue(issue):
                 abort(400)
 
-            if not self._is_reauth(response):
+            if not self._is_new_session(response):
                 logger.debug("new session")
                 self.session_new()
 
             session["_ucam_webauth"] = \
                     {"principal": response.principal,
                      "ptags": list(response.ptags),
-                     "issue": response.issue, "life": response.life,
+                     "issue": issue, "life": response.life,
                      "last": time()}
 
         else:
             session["_ucam_webauth"] = {"response_failure": True}
 
-        new_args = request.args.copy()
-        new_args.update(request.view_args)
-        new_args.pop("WLS-Response")
-        return redirect(url_for(request.endpoint, **new_args))
+        return redirect(url_without_response)
 
-    def _check_issue(self, response):
-        now = datetime.utcnow()
-        lower = now - timedelta(seconds=self.issue_bounds[0])
-        upper = now + timedelta(seconds=self.issue_bounds[1])
-        return lower <= response.issue <= upper
+    def _check_url(self, wls_response_url):
+        actual_url = request.url
 
-    def _is_reauth(self, response):
+        # note: mod_ucam_webauth simply strips everything up to a ?
+        # from both urls and compares.
+
+        # see waa2wls-protocol.txt - the WLS appends (?|&)WLS-Response=
+        # so, removing that from the end of the string should recover
+        # the exact url sent in the request
+        start = max(actual_url.rfind("?WLS-Response="),
+                    actual_url.rfind("&WLS-Response="))
+        if start == -1:
+            logger.warning("have args['WLS-Response'] but "
+                           "(?|&)WLS-Response not in request.url?")
+            return None
+
+        # check that nothing funny is going on (that the dumb parsing done
+        # above is correct)
+        response_start = start + len(".WLS-Response=")
+        response_part = urllib.unquote_plus(actual_url[response_start:])
+        if response_part != request.args["WLS-Response"]:
+            logger.debug("WLS-Response removal failed "
+                         "(removed: %r, request.args: %r)",
+                         response_part, request.args["WLS-Response"])
+            return None
+
+        # finally check that they agree.
+        actual_url = actual_url[:start]
+        if wls_response_url != actual_url:
+            logger.debug("response.url did not match url visited "
+                         "(replay of WLS-Response to other website?) "
+                         "response.url=%r request.url=%r",
+                         wls_response_url, actual_url)
+            return None
+
+        return wls_response_url
+
+    def _check_issue(self, issue):
+        now = time()
+        lower = now - self.issue_bounds[0]
+        upper = now + self.issue_bounds[1]
+        result = lower <= issue <= upper
+        if not result:
+            logger.debug("response had bad issue: "
+                         "now=%s issue=%s lower=%s upper=%s",
+                         now, issue, lower, upper)
+        return result
+
+    def _is_new_session(self, response):
         state = session["_ucam_webauth"]
         if "principal" not in state:
             return False
@@ -250,32 +328,30 @@ class AuthDecorator(object):
         return response.principal == principal and response.ptags == ptags
 
     def _redirect_to_wls(self):
-        args = request.args.copy()
-        args.update(request.view_args)
-        url = url_for(request.endpoint, _external=True, **args)
-        req = self.request_class(url, self.desc, self.aauth, self.iact,
-                                 self.msg)
+        req = self.request_class(request.url, self.desc, self.aauth,
+                                 self.iact, self.msg)
         return redirect(str(req))
 
-    def _check_life(self, state):
-        wls_life = state["life"] if self.use_wls_life else None
+    def _get_expires(self, state):
+        expires = []
 
-        if self.max_life is None:
-            life = wls_life
-        elif wls_life is None:
-            life = self.max_life
+        if self.max_life is not None:
+            expires.append(("config max life", state["issue"] + self.max_life))
+        if self.use_wls_life and state["life"] is not None:
+            expires.append(("wls life", state["issue"] + state["life"]))
+        if self.inactive_timeout is not None:
+            expires.append(("inactive", state["last"] + self.inactive_timeout))
+
+        return expires
+
+    def _check_expires(self, state):
+        expires = self._get_expires(state)
+        now = time()
+        for reason, when in expires:
+            if when < now:
+                return False, reason
         else:
-            life = min(wls_life, self.max_life)
-
-        if life is None:
-            return True
-        else:
-            end = state["issue"] + timedelta(seconds=life)
-            return end > datetime.utcnow()
-
-    def _check_inactive(self, state):
-        return (self.inactive_timeout is None) or \
-                (self["last"] + self.inactive_timeout > time())
+            return True, None
 
     def check_authorised(self, principal, ptags):
         if self.require_principal is not None:
@@ -283,7 +359,7 @@ class AuthDecorator(object):
                 return False
             
         if self.require_ptags is not None:
-            if not self.require_ptags <= ptags:
+            if self.require_ptags & ptags == set():
                 return False
 
         return True

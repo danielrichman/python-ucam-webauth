@@ -1,5 +1,6 @@
 import os
 import inspect
+import logging
 
 import ucam_webauth
 import raven
@@ -26,8 +27,12 @@ def home():
 @app.route("/decorated")
 @auth_decorator
 def decorated():
-    return "principal: {a.principal}, ptags: {a.ptags}, " \
-            "issue: {a.issue}, life: {a.life}" \
+    return "<pre>" \
+            "principal: {a.principal}, ptags: {a.ptags}, \n" \
+            "issue: {a.issue}, life: {a.life}, \n" \
+            "last: {a.last}, expires: {a.expires}, \n"\
+            "expires_all: {a.expires_all}" \
+            "</pre>" \
                 .format(a=auth_decorator)
 
 @app.route("/request/new")
@@ -80,5 +85,6 @@ def response(module):
             module=module, string=string, fields=fields, response=response)
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.DEBUG)
     app.config['TRAP_BAD_REQUEST_ERRORS'] = True
     app.run(debug=True)
