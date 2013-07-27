@@ -271,7 +271,7 @@ class TestAuthDecorator(object):
 
         with rig as (client, wls, views):
             r = client.get("/decorated")
-            assert r.status_code == 302
+            assert r.status_code == 303
             url, query = r.headers["location"].split("?")
 
         with rig.session_transaction() as session:
@@ -444,7 +444,7 @@ class TestAuthDecorator(object):
 
         with rig as (client, wls, views):
             r = client.get("/decorated")
-            assert r.status_code == 302
+            assert r.status_code == 303
             url, query = r.headers["location"].split("?")
 
         with rig as (client, wls, views):
@@ -458,7 +458,7 @@ class TestAuthDecorator(object):
 
         with rig as (client, wls, views):
             r = client.get("/decorated", query_string=query)
-            assert r.status_code == 302
+            assert r.status_code == 303
             assert r.headers["location"] == "http://localhost/decorated"
 
         with rig as (client, wls, views):
@@ -471,7 +471,7 @@ class TestAuthDecorator(object):
 
         with rig as (client, wls, views):
             r = client.get("/decorated")
-            assert r.status_code == 302
+            assert r.status_code == 303
             url, query = r.headers["location"].split("?")
 
         with rig as (client, wls, views):
@@ -485,7 +485,7 @@ class TestAuthDecorator(object):
 
         with rig as (client, wls, views):
             r = client.get("/decorated", query_string=query)
-            assert r.status_code == 302
+            assert r.status_code == 303
             assert r.headers["location"] == "http://localhost/decorated"
 
         with rig as (client, wls, views):

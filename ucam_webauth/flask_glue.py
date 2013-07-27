@@ -270,7 +270,7 @@ class AuthDecorator(object):
         else:
             session["_ucam_webauth"] = {"response_failure": True}
 
-        return redirect(url_without_response)
+        return redirect(url_without_response, code=303)
 
     def _check_url(self, wls_response_url):
         actual_url = request.url
@@ -332,7 +332,7 @@ class AuthDecorator(object):
     def _redirect_to_wls(self):
         req = self.request_class(request.url, self.desc, self.aauth,
                                  self.iact, self.msg)
-        return redirect(str(req))
+        return redirect(str(req), code=303)
 
     def _get_expires(self, state):
         expires = []
