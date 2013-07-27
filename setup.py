@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name = "python-raven",
-    version = "0.2",
+    version = "0.2.1",
     packages = ["raven"],
     py_modules = ["ucam_webauth"],
     package_data = {"raven": ["keys/pubkey*.crt"]},
