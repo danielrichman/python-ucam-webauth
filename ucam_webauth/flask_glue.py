@@ -36,7 +36,7 @@ class AuthDecorator(object):
     An instance of this class decorates views to add authentication.
 
     To use it, you'll need to subclass it and set response_class,
-    request_class and logout_url (see :class:`raven.flask.AuthDecorator`).
+    request_class and logout_url (see :class:`raven.flask_glue.AuthDecorator`).
     Then::
 
         auth_decorator = AuthDecorator() # settings, e.g., desc="..." go here
