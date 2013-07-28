@@ -31,9 +31,10 @@ Signing keys
 ------------
 
 The keys used by Raven to sign responses are included with `python-raven`.
-I took care in retrieving them, however you should trust me neither the method
-by which you installed this package. **You should check that the copies of the
-certificates you have are correct / match the files at the links below**.
+I took care in retrieving them, however you should trust neither me nor the
+method by which you installed this package.
+**You should check that the copies of the certificates you have are
+correct / match the files at the links below**.
 
 * ``pubkey2.crt`` from `<https://raven.cam.ac.uk/project/keys/>`_
 * ``pubkey901.crt`` from
