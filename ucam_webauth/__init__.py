@@ -222,11 +222,11 @@ class Request(object):
 
     .. attribute:: iact
 
-      - :const:`True`: the user must re-authenticate
-      - :const:`False`: no interaction with the user is permitted
-        (the request will only succeed if the user's identity can be
-        returned without interacting at all)
-      - :const:`None` (default): interacts if required
+    * :const:`True`: the user must re-authenticate
+    * :const:`False`: no interaction with the user is permitted
+      (the request will only succeed if the user's identity can be
+      returned without interacting at all)
+    * :const:`None` (default): interacts if required
 
     .. attribute:: msg
                    desc

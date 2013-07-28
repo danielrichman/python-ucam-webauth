@@ -53,31 +53,39 @@ class AuthDecorator(object):
 
     The decorator wraps the view in a function that:
 
-      - checks if there is a response from the WLS
-          - checks if the current URL matches that which the WLS said it
-            redirected to (avoid an evil admin of another site replaying
-            successful authentications)
-          - checks if ``flask.session`` is empty - if so, then we deduce that
-            the user has cookies disabled, and must abort immediately with
-            403 Forbidden, or we will start a redirect loop
-          - checks if the authentication method used is permitted by `aauth`
-            and user-interaction respected `iact` - if not, abort with
-            400 Bad Request
-          - updates the state with the response: updating the `principal`,
-            `ptags` and `issue` information if it was a success, or
-            clearing them (but setting a flag - see below: 401 Authentication
-            Required will be thrown after redirect) if it was a failure
-          - redirects, to remove ``WLS-Response`` from ``request.args``
-      - checks if the "response was an authentication failure" flag is set in
-        ``flask.session`` - if so, clears the flag and aborts with
-        401 Authentication Required
-      - checks to see if we are authenticated (and the session hasn't expired)
-          - if not, sends the user to the WLS to authenticate
-      - checks to see if the `principal` / `ptags` are permitted
-          - if not, aborts with a 403 Forbidden
-      - updates the 'last used' time in the state (to implement
-        `inactive_timeout`)
-      - calls the original view function
+    * checks if there is a response from the WLS
+
+      * checks if the current URL matches that which the WLS said it
+        redirected to (avoid an evil admin of another site replaying
+        successful authentications)
+      * checks if ``flask.session`` is empty - if so, then we deduce that
+        the user has cookies disabled, and must abort immediately with
+        403 Forbidden, or we will start a redirect loop
+      * checks if the authentication method used is permitted by `aauth`
+        and user-interaction respected `iact` - if not, abort with
+        400 Bad Request
+      * updates the state with the response: updating the `principal`,
+        `ptags` and `issue` information if it was a success, or
+        clearing them (but setting a flag - see below: 401 Authentication
+        Required will be thrown after redirect) if it was a failure
+      * redirects, to remove ``WLS-Response`` from ``request.args``
+
+    * checks if the "response was an authentication failure" flag is set in
+      ``flask.session`` - if so, clears the flag and aborts with
+      401 Authentication Required
+
+    * checks to see if we are authenticated (and the session hasn't expired)
+
+      * if not, sends the user to the WLS to authenticate
+
+    * checks to see if the `principal` / `ptags` are permitted
+
+      * if not, aborts with a 403 Forbidden
+
+    * updates the 'last used' time in the state (to implement
+      `inactive_timeout`)
+
+    * calls the original view function
 
     You may wish to catch the 401 and 403 aborts with :attr:`app.errorhandler`.
 
@@ -122,21 +130,21 @@ class AuthDecorator(object):
 
     More complex customisation is possible:
 
-      - override :meth:`check_authorised` to do more complex
-        checking than `require_principal`, `require_ptags`
-        (note that this replaces checking `require_principal`, `require_ptags`)
+    * override :meth:`check_authorised` to do more complex
+      checking than `require_principal`, `require_ptags`
+      (note that this replaces checking `require_principal`, `require_ptags`)
 
-      - override :meth:`session_new`
+    * override :meth:`session_new`
 
-        The :class:`AuthDecorator` only touches
-        ``flask.session["_ucam_webauth"]``.
-        If you've saved other (important) things to the session object, you
-        may want to clear them out when the state changes.
+      The :class:`AuthDecorator` only touches
+      ``flask.session["_ucam_webauth"]``.
+      If you've saved other (important) things to the session object, you
+      may want to clear them out when the state changes.
 
-        You can do this by subclassing and overriding session_new. It is called
-        whenever a response is received from the WLS, except if the response
-        is a successful re-authentication after session expiry, with the same
-        `prinicpal` and `ptags` as before.
+      You can do this by subclassing and overriding session_new. It is called
+      whenever a response is received from the WLS, except if the response
+      is a successful re-authentication after session expiry, with the same
+      `prinicpal` and `ptags` as before.
 
     To log the user out, call :meth:`logout`, which will clear the session
     state. Further, :meth:`logout` returns a :meth:`flask.redirect` to the
@@ -316,10 +324,10 @@ class AuthDecorator(object):
         """
         Deal with a response in the query string of this request
 
-          - checks `url`, `iact`, `aauth` and `issue`
-          - starts a new session if necessary (see :meth:`session_new`)
-          - sets the 'auth failed' flag if necessary
-          - redirects to remove ``WLS-Response`` from the url/query string
+        * checks `url`, `iact`, `aauth` and `issue`
+        * starts a new session if necessary (see :meth:`session_new`)
+        * sets the 'auth failed' flag if necessary
+        * redirects to remove ``WLS-Response`` from the url/query string
 
         """
 

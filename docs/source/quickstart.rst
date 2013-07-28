@@ -115,9 +115,9 @@ The included `simple_demo flask app
 <https://github.com/danielrichman/python-raven/tree/master/simple_demo>`_
 serves as a far more comprehensive example, including:
 
-  - decorator usage
-  - integration with existing authentication (i.e., user is offered to
-    log in via Raven or some other method)
-  - full Raven logout
-  - message flashing
+* decorator usage
+* integration with existing authentication (i.e., user is offered to
+  log in via Raven or some other method)
+* full Raven logout
+* message flashing
 
