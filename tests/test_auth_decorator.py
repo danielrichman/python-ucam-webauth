@@ -1,12 +1,15 @@
 import time
 import functools
-import urllib
 import random
 import json
 from urllib import urlencode
+from urlparse import parse_qs
 from datetime import datetime
 
+from nose.tools import assert_raises
+
 from werkzeug.datastructures import MultiDict
+from werkzeug.exceptions import Unauthorized
 import flask
 import flask.sessions
 import ucam_webauth
@@ -788,3 +791,56 @@ class TestAuthDecorator(object):
             assert "_ucam_webauth" not in session
 
         self.check_auth(rig)
+
+    def test_before_request(self):
+        # Though technically the other tests are testing the decorator
+        # interface, since that's just a thin wrapper around calling
+        # before_request(), it's already tested. This test just checks
+        # that if you want to call the before_request() method directly,
+        # you can, and that it behaves sensibly. It's modeled on
+        # test_removes_wls_response_from_URL
+
+        rig = TestRig()
+        before_request = rig.authdecorator.before_request
+
+        with rig.app.test_request_context("/before_request_test"):
+            r = before_request()
+            assert r.status_code == 303
+            url, query = r.location.split("?")
+            assert url == "/fake_wls"
+            assert parse_qs(query) == \
+                {"url": ["http://localhost/before_request_test"], "ver": ["3"]}
+            session_save = flask.session.copy()
+
+        # answer 1
+        answer = "/before_request_test?" + \
+                make_response(status=ucam_webauth.STATUS_CANCELLED,
+                              url="http://localhost/before_request_test")
+
+        with rig.app.test_request_context(answer):
+            flask.session.update(session_save)
+            r = before_request()
+            assert r.status_code == 303
+            assert r.location == "http://localhost/before_request_test"
+            session_save_401 = flask.session.copy()
+
+        with rig.app.test_request_context("/before_request_test"):
+            flask.session.update(session_save_401)
+            assert_raises(Unauthorized, before_request)
+
+        # answer 2
+        answer = "/before_request_test?" + \
+                make_response(principal="djr61",
+                              url="http://localhost/before_request_test")
+
+        with rig.app.test_request_context(answer):
+            flask.session.update(session_save)
+            r = before_request()
+            assert r.status_code == 303
+            assert r.location == "http://localhost/before_request_test"
+            session_save_200 = flask.session.copy()
+
+        with rig.app.test_request_context("/before_request_test"):
+            flask.session.update(session_save_200)
+            r = before_request()
+            assert r == None

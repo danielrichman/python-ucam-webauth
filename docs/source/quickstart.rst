@@ -4,16 +4,39 @@ Quickstart
 Using the flask decorator
 -------------------------
 
-.. code-block:: python
+::
 
     from flask import Flask
-    app = Flask(__name__)
+    from raven.flask_glue import AuthDecorator
 
+    app = Flask(__name__)
+    app.secret_key = "a secret key"
     auth_decorator = AuthDecorator(desc="My website")
 
     @app.route("/some_url")
     @auth_decorator
     def my_view():
+        return "You are " + auth_decorator.principal
+
+    if __name__ == '__main__':
+        app.run()
+
+Requiring all flask requests be authenticated
+---------------------------------------------
+
+::
+
+    from flask import Flask
+    from raven.flask_glue import AuthDecorator
+
+    app = Flask(__name__)
+    app.secret_key = "a secret key"
+    auth_decorator = AuthDecorator()
+
+    app.before_request(auth_decorator.before_request)
+
+    @app.route("/")
+    def home():
         return "You are " + auth_decorator.principal
 
     if __name__ == '__main__':

@@ -46,46 +46,18 @@ class AuthDecorator(object):
         def my_view():
             return "You are " + auth_decorator.principal
 
+    Or to require users be authenticated for all views::
+
+        app.before_request(auth_decorator.before_request)
+
     Note that since it uses flask.session, you'll need to set
     :attr:`app.secret_key`.
 
     This tries to emulate the feel of applying mod_ucam_webauth to a file.
 
-    The decorator wraps the view in a function that:
-
-    * checks if there is a response from the WLS
-
-      * checks if the current URL matches that which the WLS said it
-        redirected to (avoid an evil admin of another site replaying
-        successful authentications)
-      * checks if ``flask.session`` is empty - if so, then we deduce that
-        the user has cookies disabled, and must abort immediately with
-        403 Forbidden, or we will start a redirect loop
-      * checks if the authentication method used is permitted by `aauth`
-        and user-interaction respected `iact` - if not, abort with
-        400 Bad Request
-      * updates the state with the response: updating the `principal`,
-        `ptags` and `issue` information if it was a success, or
-        clearing them (but setting a flag - see below: 401 Authentication
-        Required will be thrown after redirect) if it was a failure
-      * redirects, to remove ``WLS-Response`` from ``request.args``
-
-    * checks if the "response was an authentication failure" flag is set in
-      ``flask.session`` - if so, clears the flag and aborts with
-      401 Authentication Required
-
-    * checks to see if we are authenticated (and the session hasn't expired)
-
-      * if not, sends the user to the WLS to authenticate
-
-    * checks to see if the `principal` / `ptags` are permitted
-
-      * if not, aborts with a 403 Forbidden
-
-    * updates the 'last used' time in the state (to implement
-      `inactive_timeout`)
-
-    * calls the original view function
+    The decorator wraps the view in a function that calls :meth:`request`
+    first, calling the original view function if it does not return
+    a redirect or abort.
 
     You may wish to catch the 401 and 403 aborts with :attr:`app.errorhandler`.
 
@@ -189,13 +161,16 @@ class AuthDecorator(object):
         (:class:`AuthDecorator` objects are callable so that they can be used
         as function decorators.)
 
-        Calling it returns a 'wrapper' view function that ensures the client
-        is logged into raven before calling and returning the value of the
-        original function.
+        Calling it returns a 'wrapper' view function that calls
+        :meth:`request` first.
         """
 
         def wrapper(**view_args):
-            return self._wrapped(view_function, view_args)
+            r = self.before_request()
+            if r is not None:
+                return r
+            return view_function(**view_args)
+
         functools.update_wrapper(wrapper, view_function)
         return wrapper
 
@@ -274,6 +249,49 @@ class AuthDecorator(object):
     def _wrapped(self, view_function, view_args):
         """Decorated functions are replaced with this function"""
 
+    def before_request(self):
+        """
+        The "main" method
+
+        * checks if there is a response from the WLS
+
+          * checks if the current URL matches that which the WLS said it
+            redirected to (avoid an evil admin of another site replaying
+            successful authentications)
+          * checks if ``flask.session`` is empty - if so, then we deduce that
+            the user has cookies disabled, and must abort immediately with
+            403 Forbidden, or we will start a redirect loop
+          * checks if the authentication method used is permitted by `aauth`
+            and user-interaction respected `iact` - if not, abort with
+            400 Bad Request
+          * updates the state with the response: updating the `principal`,
+            `ptags` and `issue` information if it was a success, or
+            clearing them (but setting a flag - see below: 401 Authentication
+            Required will be thrown after redirect) if it was a failure
+          * returns a redirect that removes ``WLS-Response`` from
+            ``request.args``
+
+        * checks if the "response was an authentication failure" flag is set
+          in ``flask.session`` - if so, clears the flag and aborts with
+          401 Authentication Required
+
+        * checks to see if we are authenticated (and the session hasn't
+          expired)
+
+          * if not, returns a redirect that will sends the user to the
+            WLS to authenticate
+
+        * checks to see if the `principal` / `ptags` are permitted
+
+          * if not, aborts with a 403 Forbidden
+
+        * updates the 'last used' time in the state (to implement
+          `inactive_timeout`)
+
+        Returns ``None``, if the request should proceed to the actual
+        view function.
+        """
+
         # we always modify the session. Changes to mutable objects (our
         # state dict) aren't automatically picked up
         session.modified = True
@@ -318,7 +336,7 @@ class AuthDecorator(object):
 
         state["last"] = time()
 
-        return view_function(**view_args)
+        return None
 
     def _handle_response(self, response):
         """
