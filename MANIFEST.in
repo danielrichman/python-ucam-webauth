@@ -1,4 +1,5 @@
 graft docs
+include description.rst
 include COPYING
 include COPYING.LESSER
 include README.md
