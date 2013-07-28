@@ -11,8 +11,9 @@ setup(
     packages = ["raven", "ucam_webauth"],
     package_data = {"raven": ["keys/pubkey*.crt"]},
     install_requires = ["M2Crypto", "setuptools"],
-    extras_require = {"tests": ["nosetests"],
-                      "simple_demo": ["Flask>=0.10"]},
+    extras_require = {"flask_glue": ["Flask"]},
+    tests_require = ["nose", "Flask"],
+    test_suite = 'nose.collector',
 
     author = "Daniel Richman",
     author_email = "main@danielrichman.co.uk",
@@ -30,3 +31,6 @@ setup(
         "Programming Language :: Python :: 2"
     ]
 )
+
+# python setup.py test
+# python setup.py build_sphinx sdist upload upload_sphinx

@@ -1,0 +1,6 @@
+M2Crypto
+setuptools
+nose
+Flask
+Sphinx
+Sphinx-PyPI-upload

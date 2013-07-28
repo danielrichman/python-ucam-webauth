@@ -1,4 +1,4 @@
-include doc
+graft docs
 include COPYING
 include COPYING.LESSER
 include README.md
