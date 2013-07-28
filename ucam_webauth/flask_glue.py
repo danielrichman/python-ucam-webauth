@@ -55,9 +55,9 @@ class AuthDecorator(object):
 
     This tries to emulate the feel of applying mod_ucam_webauth to a file.
 
-    The decorator wraps the view in a function that calls :meth:`request`
-    first, calling the original view function if it does not return
-    a redirect or abort.
+    The decorator wraps the view in a function that calls
+    :meth:`before_request` first, calling the original view function if it
+    does not return a redirect or abort.
 
     You may wish to catch the 401 and 403 aborts with :attr:`app.errorhandler`.
 
