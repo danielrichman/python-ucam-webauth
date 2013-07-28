@@ -1,9 +1,9 @@
 import os.path
 from setuptools import setup
 
-readme_file = os.path.join(os.path.dirname(__file__), 'README.md')
-with open(readme_file) as f:
-    readme = f.read()
+filename = os.path.join(os.path.dirname(__file__), 'description.rst')
+with open(filename) as f:
+    long_description = f.read()
 
 setup(
     name = "python-raven",
@@ -18,7 +18,7 @@ setup(
     author = "Daniel Richman",
     author_email = "main@danielrichman.co.uk",
     description = "Ucam-webauth and Raven application agent in Python",
-    long_description = readme,
+    long_description = long_description,
     license="GNU Lesser General Public License Version 3",
     keywords = "Raven Cambridge ucam-webauth",
     url = "http://github.com/danielrichman/python-raven",
