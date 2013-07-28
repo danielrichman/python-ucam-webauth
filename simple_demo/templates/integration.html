@@ -1,0 +1,47 @@
+{% from "print_thing.html" import print_thing %}
+
+<html>
+    <body>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        <p>
+            flashed messages:
+            <ul>
+                {% for message in get_flashed_messages() %}
+                    <li>{{ message }}</li>
+                {% endfor %}
+            </ul>
+        </p>
+    {% endif %}
+{% endwith %}
+
+{% if session.user %}
+    <p>You are logged in as {{ session.user }} via {{ session.auth }}</p>
+    <form method="GET" action="{{ url_for('integration_logout') }}">
+        {% if session.auth == "raven" %}
+            <label for="also_raven">
+                <input type="checkbox" name="also_raven" id="also_raven" value="yes">
+                Also log out of Raven
+            </label>
+        {% endif %}
+        <button type="submit">Log out</button>
+    </form>
+{% else %}
+    <p>You are not logged in.</p>
+    <p><a href="{{ url_for('integration_login_raven') }}">Log In via Raven</a></p>
+    <form method="POST" action="{{ url_for('integration_login_username') }}">
+        <label for="username">Username:</label>
+        <input type="text" name="username" id="username">
+        <button type="submit">Log in via some other method</button>
+    </form>
+{% endif %}
+
+<h3>session</h3>
+
+{{ print_thing(session) }}
+
+<p><a href='{{ url_for("home") }}'>Home</a></p>
+
+    </body>
+</html>

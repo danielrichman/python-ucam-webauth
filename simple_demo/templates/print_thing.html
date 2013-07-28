@@ -1,0 +1,17 @@
+{% macro print_thing(thing) %}
+    {% if thing is mapping %}
+        <ul>
+            {% for key, value in thing.iteritems() %}
+                <li><b>{{ key }}</b>: {{ print_thing(value) }}</li>
+            {% endfor %}
+        </ul>
+    {% elif thing is iterable and thing is not string %}
+        <ul>
+            {% for value in thing %}
+                <li>{{ print_thing(value) }}</li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        {{ thing }}
+    {% endif %}
+{% endmacro %}

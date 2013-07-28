@@ -1,13 +1,15 @@
 import os
 import inspect
 import logging
+from datetime import datetime
 
 import ucam_webauth
 import raven
 import raven.demoserver
 import raven.flask_glue
 
-from flask import Flask, request, render_template, redirect, url_for, abort
+from flask import Flask, request, render_template, redirect, \
+                  url_for, abort, session, flash
 app = Flask(__name__)
 
 app.config["SECRET_KEY"] = os.urandom(16)
@@ -67,7 +69,7 @@ def request_build():
             abort(400)
         return redirect(str(req))
     else:
-        return render_template("built.html", 
+        return render_template("built.html",
                 args=args, args_str=args_str, module=module, request=req)
 
 @app.route("/response/<module>")
@@ -78,8 +80,64 @@ def response(module):
     fields = ['ver', 'status', 'msg', 'issue', 'id', 'url',
               'principal', 'ptags', 'auth', 'sso', 'life', 'params',
               'kid', 'signed']
-    return render_template("response.html", 
-            module=module, string=string, fields=fields, response=response)
+    # so that print_thing may iterate over it
+    thing = dict( (k, getattr(response, k)) for k in fields )
+    return render_template("response.html",
+                           module=module, string=string, response=thing)
+
+@app.route("/integration")
+def integration_home():
+    session_ = session.copy()
+    if "_ucam_webauth" in session_:
+        del session_["_ucam_webauth"]
+    if "_flashes" in session_:
+        del session_["_flashes"]
+    return render_template("integration.html", session=session_)
+
+@app.route("/integration/login_username", methods=["POST"])
+def integration_login_username():
+    session["user"] = request.form["username"]
+    session["auth"] = "some other method"
+    flash("Successfully logged in as {0}".format(session["user"]))
+    return redirect(url_for("integration_home"))
+
+@app.route("/integration/login_raven")
+def integration_login_raven():
+    u = url_for("integration_login_raven_response", _external=True)
+    r = raven.Request(url=u, desc="python-raven simple_demo")
+    return redirect(str(r))
+
+@app.route("/integration/login_raven/response")
+def integration_login_raven_response():
+    r = raven.Response(request.args["WLS-Response"])
+    if r.url != request.base_url:
+        print "Bad url"
+        abort(400)
+
+    issue_delta = (datetime.utcnow() - r.issue).total_seconds()
+    if not -5 < issue_delta < 15:
+        print "Bad issue"
+        abort(403)
+
+    if r.success:
+        # a no-op here, but important if you set iact or aauth
+        r.check_iact_aauth(None, None)
+        session["user"] = r.principal
+        session["auth"] = "raven"
+        flash("Successfully logged in as {0}".format(r.principal))
+        return redirect(url_for("integration_home"))
+    else:
+        flash("Raven authentication failed")
+        return redirect(url_for("integration_home"))
+
+@app.route("/integration/logout")
+def integration_logout():
+    del session["user"]
+    del session["auth"]
+    if request.args.get("also_raven", False):
+        return redirect(raven.RAVEN_LOGOUT)
+    else:
+        return redirect(url_for("integration_home"))
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG)

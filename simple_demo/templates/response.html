@@ -1,15 +1,11 @@
+{% from "print_thing.html" import print_thing %}
+
 <html>
     <body>
 
 <p><code>{{ module }}.Response({{ repr(string) }})</code></p>
 
-<p>
-    <ul>
-        {% for key in fields %}
-            <li>{{ key }}: <code>{{ repr(getattr(response, key)) }}</code></li>
-        {% endfor %}
-    </ul>
-</p>
+{{ print_thing(response) }}
 
 <p><a href='{{ url_for("home") }}'>Home</a></p>
 

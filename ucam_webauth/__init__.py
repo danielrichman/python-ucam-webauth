@@ -15,23 +15,54 @@
 # You should have received a copy of the GNU General Public License
 # along with python-raven.  If not, see <http://www.gnu.org/licenses/>.
 
+"""
+The ucam_webauth module implements version 3 of the WAA to WLS protocol.
+
+It is not set up to talk to a specific WAA (i.e., Raven), and subclassing
+this modules' classes is required to make it functional (see :mod:`raven`).
+
+The protocol is implemented as defined at
+`<https://raven.cam.ac.uk/project/waa2wls-protocol.txt>`_
+at the time of writing (though that URL may have since been replaced with a
+newer version). A copy of wawa2wls-protocol.txt is included with python-raven,
+and more information can be found at `<https://raven.cam.ac.uk/project/>`_.
+
+.. glossary::
+
+    WAA
+        A WAA is a "Web Application Agent"
+        (i.e., an application using this module)
+
+    WLS
+        The "Web Login Service" (i.e., Raven)
+
+.. data:: ATYPE_PWD
+          STATUS_SUCCESS
+          STATUS_CANCELLED
+          STATUS_NOATYPES
+          STATUS_UNSUPPORTED_VERSION
+          STATUS_BAD_REQUEST
+          STATUS_INTERACTION_REQUIRED
+          STATUS_WAA_NOT_AUTHORISED
+          STATUS_AUTHENTICATION_DECLINED
+
+    :class:`AuthenticationType` and :class:`Status` instances used as constants
+    in requests and responses
+
+    They compare equal with their corresponding integers (for status codes)
+    and strings (for atypes).
+
+.. data:: STATUS_CODES
+
+    A dict mapping status.code (i.e., the integer status code) to the relevant
+    status object
+
+"""
+
 from __future__ import unicode_literals
 
-"""
-Ucam-webauth
-
-The ucam_webauth module implements version 3 of the WAA to WLS protocol as
-was defined at https://raven.cam.ac.uk/project/waa2wls-protocol.txt at the
-time of writing (though that URL may have since been replaced with a newer
-version). A copy is included. More information can be found at
-https://raven.cam.ac.uk/project/.
-
-WAA: Web Application Agent (i.e., an application using this module)
-WLS: Web Logon Service (typically Raven)
-"""
-
 __name__ = "ucam_webauth"
-__version__ = "0.1"
+__version__ = "0.3"
 __author__ = "Daniel Richman"
 __copyright__ = "Copyright 2013 Daniel Richman"
 __email__ = "main@danielrichman.co.uk"
@@ -53,20 +84,27 @@ else:
     from urllib import unquote, urlencode
 
 
-__all__ = ["Status", "ErrorStatus", "STATUS_CODE_LIST", "STATUS_CODES",
-           "ATYPE_PWD", "Response"]
+__all__ = ["Status", "STATUS_CODE_LIST", "STATUS_CODES",
+           "AuthenticationType", "ATYPE_PWD", "Request", "Response"]
 
 
 class AuthenticationType(object):
     """
     An Authentication Type
 
-    name: the name by which Ucam-webauth knows it
-    description: a sentence describing it
+    This class exists to create the :const:`ucam_webauth.AUTH_PWD` constant.
 
-    Note that comparing an AuthenticationType object with a string (or another
-    AuthenticationType object) will compare the name attribute only.
-    Further, str(atype) == atype.name.
+    .. attribute:: name
+
+        the name by which Ucam-webauth knows it
+
+    .. attribute:: description
+
+        a sentence describing it
+
+    Note that comparing an :class:`AuthenticationType` object with a string
+    (or another :class:`AuthenticationType` object) will compare the
+    :attr:`name` attribute only. Further, ``str(atype) == atype.name``.
     """
 
     def __init__(self, name, description):
@@ -93,13 +131,21 @@ class Status(object):
     """
     A WLS response Status
 
-    code: a (three digit) integer
-    name: short name for the status
-    description: a sentence describing the status
+    .. attribute:: code
 
-    Note that comparing a Status object with an integer (or another Status
-    object) will compare the code attribute only. Further,
-    int(status_object) == status_object.code
+        a (three digit) integer
+
+    .. attribute:: name
+
+        short name for the status
+
+    .. attribute:: description
+
+        description: a sentence describing the status
+
+    Note that comparing a :class:`Status` object with an integer
+    (or another :class:`Status` object) will compare the :attr:`code`
+    attribute only. Further, `int(status_object) == status_object.code`
     """
 
     def __init__(self, code, name, description):
@@ -123,12 +169,6 @@ class Status(object):
             return False
     def __ne__(self, other):
         return not self == other
-
-class ErrorStatus(Status, Exception):
-    """A Status that is not 'success' (200)"""
-    def __init__(self, code, name, description):
-        Status.__init__(self, code, name, description)
-        Exception.__init__(self, "{0} {1}".format(code, description))
 
 STATUS_CODE_LIST = (
     Status(200, "success", "Successful authentication."),
@@ -156,55 +196,73 @@ class Request(object):
     """
     A Request to the WLS
 
-    Parameters:
+    :type url: :class:`str`
+    :param url: a fully qualified URL; the user will be returned here
+                (along with the Response as a query parameter) afterwards
+    :type desc: :class:`str`
+    :param desc: optional description of the resource/website
+                 (encoding - see below)
+    :type aauth: :class:`set` of :class:`AuthenticationType` objects
+    :param aauth: optional set of permissible authentication types;
+                  we require the user to use one of them
+                  (if empty, the WLS uses its default set)
+    :type iact: ``True``, ``False`` or ``None``
+    :param iact: interaction required, forbidden or don't care (respectively)
+    :type msg: :class:`str`
+    :param msg: optional message explaining why authentication is required
+                (encoding - see below)
+    :type params: :class:`str`
+    :param params: data, which is returned unaltered in the :class:`Response`
+    :type fail: :class:`bool`
+    :param fail: if True, and authentication fails, the WLS must show an error
+                 message and not redirect back to the WAA
 
-        url: (str) a fully qualified URL; the user will be returned here
-             (along with the Response as a query parameter) afterwards
-        desc: (str) optional description of the resource/website (see below)
-        aauth: (set of AuthenticationTypes) optional set of permissible
-               authentication types that we require the user to use one of
-               (if empty, the WLS uses its default set)
-        iact: (bool or None) interaction required / forbidden
+    All parameters are available as attributes as of Request object,
+    once created.
 
-          - True: the user must re-authenticate
-          - False: no interaction with the user is permitted
-            (the request will only succeed if the user's identity can be
-            returned without interacting at all)
-          - None (default): interacts if required
+    .. attribute:: iact
 
-        msg: (str) optional message explaining why authentication is required
-             (see below)
-        params: (str) data, which is returned unaltered in the Response
-        fail: (bool) if True, and authentication fails, the WLS must show an
-              error message and not redirect back to the WAA.
+      - :const:`True`: the user must re-authenticate
+      - :const:`False`: no interaction with the user is permitted
+        (the request will only succeed if the user's identity can be
+        returned without interacting at all)
+      - :const:`None` (default): interacts if required
 
-    msg and desc encoding:
+    .. attribute:: msg
+                   desc
 
-    The 'msg' and 'desc' parameters are restricted to printable ASCII
-    characters (0x20 - 0x7e). The WLS will convert '<' and '>' to '&lt;' and
-    '&gt;' before using either string in HTML, preventing the inclusion of
-    markup. However, it does not touch '&', so HTML character and numeric
-    entities may be used to represent other characters.
+        The 'msg' and 'desc' parameters are restricted to printable ASCII
+        characters (0x20 - 0x7e). The WLS will convert '<' and '>' to '&lt;'
+        and '&gt;' before using either string in HTML, preventing the
+        inclusion of markup. However, it does not touch '&', so HTML character
+        and numeric entities may be used to represent other characters.
 
-    If encode_strings is True, & will be escaped to '&amp;', and non-ascii
-    characters in msg and dseg will be converted to their numeric entities.
+        If `encode_strings` is ``True``, ``&`` will be escaped to ``&amp;``,
+        and non-ascii characters in `msg` and `desc` will be converted to
+        their numeric entities.
 
-    An error will be raised if non-printable-ASCII characters then remain
-    in msg or desc.
+        Otherwise, it is up to you to encode your strings. An error will be
+        raised if `msg` or `desc` contain non-printable-ASCII characters.
 
-    params:
+    .. attribute:: params
 
-    The ucam-webauth protocol does not specify any restrictions on the content
-    of params. However, awful things may happen if you put arbitary binary
-    data in here. The Raven server appears to interpret non-ascii contents
-    as latin-1, turn them into html entities in order to put them in a hidden
-    HTML input element, then turn them back into (hopefully) the same binary
-    data to be returned in the Response. As a result it outright rejects
-    'params' containing bytes below 0x20, and has the potential to go horribly
-    wrong and land you in encoding hell.
+        The ucam-webauth protocol does not specify any restrictions on the
+        content of params. However, awful things may happen if you put
+        arbitary binary data in here. The Raven server appears to interpret
+        non-ascii contents as latin-1, turn them into html entities in order
+        to put them in a hidden HTML input element, then turn them back into
+        (hopefully) the same binary data to be returned in the Response. As a
+        result it outright rejects 'params' containing bytes below 0x20, and
+        has the potential to go horribly wrong and land you in encoding hell.
 
-    Basically, you probably want to base64 params before giving it to a
-    Request object.
+        Basically, you probably want to base64 params before giving it to a
+        Request object.
+
+    .. method:: __str__(self)
+
+        Evaluating ``str(request_object)`` gives a query string, excluding
+        the ``?``
+
     """
 
     _printable_regexp = re.compile("^[\\x20-\\x7E]+$")
@@ -294,55 +352,121 @@ class Response(object):
     """
     A Response from the WLS
 
-    Constructed by parsing 'string', the 'encoded response string' from the
+    Constructed by parsing `string`, the 'encoded response string' from the
     WLS.
 
+    The Response class has the following attributes, which must be set by
+    subclassing it (see :class:`raven.Response`):
 
-    The Response class has the following attributes, set by subclassing:
+    .. attribute:: old_version_ptags
 
-        old_version_ptags: (set of strings) ptags to use if ver < 3
-        keys: (dict) maps key identifiers 'kid' to a RSA public key
-              (an object with a verify(data, signature, algo) method,
-              e.g. M2Crypto.RSA.RSA_pub)
+        A :class:`set` of :class:`str` objects
 
+        The ptags attribute is set to this value if the version of the
+        response is less than 3
+
+    .. attribute:: keys
+
+        A dict mapping key identifiers (`kid`) to a RSA public key
+        (which must be an object with a ``verify(data, signature, algo)``
+        method; e.g., :class:`M2Crypto.RSA.RSA_pub`)
 
     A Response object has the following attributes:
 
-    Always present:
+    **Always present**
 
-        ver: (int) response protocol version
-        status: (Status object) response status
-        msg: (str) a text message describing the status of the authentication
-             request, suitable for display to the end-user
-        issue: (datetime (tz naive; values are UTC)) response creation time
-        id: (int) an "identifier" for the response. (issue, id) is unique
-        url: the value of url supplied in the request
-        success: (bool) shorthand for status == STATUS_SUCCESS
-        params: (str) a copy of params from the request
-        signed: (bool) whether the signature was present and has been verified
+    .. attribute:: ver
 
-    Present if authentication was successful, otherwise None:
+        response protocol version
+        (:class:`int`)
 
-        principal: (str) the authenticated identity of the user (if successful)
-        ptags: (set of strs) attributes or properties of the principal
+    .. attribute:: status
 
-    Present if authentication was established by interaction, otherwise None:
+        response status
+        (:class:`Status` constant)
 
-        auth: (AuthenticationType) method of authentication used
+    .. attribute:: msg
 
-    If authentication was successful, then sso is present. sso may not be the
-    empty list if auth is None. sso is None if authentication was unsuccessful
+        a text message describing the status of the authentication
+        request, suitable for display to the end-user
+        (:class:`str`)
 
-        sso: (set of AuthenticationTypes) previous successful authentication
-             types used
+    .. attribute:: issue
 
-    Optional if authentication was successful, otherwise None:
+        response creation time
+        (:class:`datetime`, timezone naive - the values are UTC)
 
-        life: (int, seconds) remaining life of the users' WLS session
+    .. attribute:: id
 
-    Required if signed is True:
+        an "identifier" for the response.
+        (:class:`int`)
 
-        kid: (str) identifies the RSA key used to sign the request
+        The tuple (issue, id) is guaranteed to be unique
+
+    .. attribute:: url
+
+        the value of `url` supplied in the request, or equivalently,
+        the URL to which this response was delivered
+        (:class:`str`)
+
+    .. attribute:: success
+
+        shorthand for ``status == STATUS_SUCCESS``
+        (:class:`bool`)
+
+    .. attribute:: params
+
+        a copy of `params` from the request
+        (:class:`str`)
+
+    .. attribute:: signed
+
+        whether the signature was present and has been verified
+        (:class:`bool`)
+
+        Note that a present but invalid signature will produce an exception
+        when parsed.
+
+    **Present if authentication was successful, otherwise ``None``:**
+
+    .. attribute:: principal:
+
+        the authenticated identity of the user
+        (:class:`str`)
+
+    .. attribute:: ptags
+
+        attributes or properties of the principal
+        (:class:`frozenset` of :class:`str` objects)
+
+    .. attribute:: auth
+
+        method of authentication used
+        (:class:`AuthenticationType` constant, or ``None``)
+
+        If authentication was not established by interaction (i.e., the
+        client was already authenticated) then `auth` is ``None``
+
+    .. attribute:: sso
+
+        previous successful authentication types used
+        (:class:`frozenset` of :class:`AuthenticationType` constants)
+
+        `sso` will not be the empty set if auth is ``None``
+
+    **Optional if authentication was successful, otherwise ``None``:**
+
+    .. attribute:: life
+
+        remaining life of the user's WLS session
+        (:class:`int`, in seconds)
+
+    **Required if signed is True:**
+
+    .. attribute:: kid
+
+        identifies the RSA key used to sign the request
+        (:class:`str`)
 
     """
 
@@ -460,6 +584,7 @@ class Response(object):
 
     @classmethod
     def _decode_value(cls, encoded):
+        """Unquote '!' and '%' in response field values"""
         # From waa2wls-protocol.txt:
         # If the characters '!'  or '%' appear in any field value they MUST
         # be replaced by their %-encoded representation before concatenation.
@@ -527,6 +652,7 @@ class Response(object):
 
     @classmethod
     def _atype_obj(cls, auth):
+        """Convert a string to an AuthenticationType constant"""
         if auth == "pwd":
             return ATYPE_PWD
         else:
@@ -586,6 +712,14 @@ class Response(object):
                                         .format(key))
 
     def check_iact_aauth(self, iact, aauth):
+        """
+        Check that the WLS honoured `iact`, `aauth`
+
+        This method checks that `self.auth`, `self.sso` are consistent with
+        the `iact` and `aauth`, which should be the same as the values used
+        to construct the :class:`Request`.
+        """
+
         if iact is True:
             # must have authenticated just now:
             if self.auth is None:

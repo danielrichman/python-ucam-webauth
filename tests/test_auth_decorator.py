@@ -323,7 +323,7 @@ class TestAuthDecorator(object):
                           inactive_timeout=None)
             self.check_auth(rig, life=life)
             when = self.time() + life
-            self.check_remembered_and_expires_props(rig, when, 
+            self.check_remembered_and_expires_props(rig, when,
                     [("wls life", when)])
             self.time.advance(life - 1)
             self.check_remembered_auth(rig)
@@ -337,7 +337,7 @@ class TestAuthDecorator(object):
         for i in range(10):
             self.time.advance(3599)
             when = self.time() + 3600
-            self.check_remembered_and_expires_props(rig, when, 
+            self.check_remembered_and_expires_props(rig, when,
                     [("inactive", when)])
         self.time.advance(3601)
         self.check_auth(rig)

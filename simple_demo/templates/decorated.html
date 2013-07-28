@@ -1,5 +1,9 @@
+{% from "print_thing.html" import print_thing %}
+
 <html>
     <body>
+
+<h3>authdecorator</h3>
 
 <ul>
     <li><b>principal</b>: {{ a.principal }}</li>
@@ -18,7 +22,13 @@
     </li>
 </ul>
 
+<h3>session</h3>
+
+{{ print_thing(session) }}
+
 <p><a href="{{ url_for('decorated_logout') }}">logout</a></p>
+
+<p><a href='{{ url_for("home") }}'>Home</a></p>
 
     </body>
 </html>

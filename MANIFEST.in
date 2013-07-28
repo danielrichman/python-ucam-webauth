@@ -1,0 +1,5 @@
+include doc
+include COPYING
+include COPYING.LESSER
+include README.md
+include waa2wls-protocol.txt
