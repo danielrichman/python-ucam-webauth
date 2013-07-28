@@ -33,7 +33,7 @@ And parse responses::
 
     >>> r = Response("3!200!!20130705T150000Z!1373000000-00000-00!"
                      "http%3A%2F%2Fhost%2Fpath!djr61!current!pwd!!"
-                     "36000!!2!signature-ommitted")
+                     "36000!!2!signature-omitted")
     >>> r.success
     True
     >>> r.principal

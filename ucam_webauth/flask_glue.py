@@ -96,7 +96,7 @@ class AuthDecorator(object):
     Further, the attributes :attr:`expires` and :attr:`expires_all` give
     information on when the ucam_webauth session will expire.
 
-    For the `desc`, `aauth`, `iact`, `msg` paramters, see
+    For the `desc`, `aauth`, `iact`, `msg` parameters, see
     :class:`ucam_webauth.Request`.
 
     Note that the `max_life`, `use_wls_life` and `inactive_timeout` parameters
@@ -144,7 +144,7 @@ class AuthDecorator(object):
       You can do this by subclassing and overriding session_new. It is called
       whenever a response is received from the WLS, except if the response
       is a successful re-authentication after session expiry, with the same
-      `prinicpal` and `ptags` as before.
+      `principal` and `ptags` as before.
 
     To log the user out, call :meth:`logout`, which will clear the session
     state. Further, :meth:`logout` returns a :meth:`flask.redirect` to the
@@ -275,7 +275,7 @@ class AuthDecorator(object):
         """Decorated functions are replaced with this function"""
 
         # we always modify the session. Changes to mutable objects (our
-        # state dict) arn't automatically picked up
+        # state dict) aren't automatically picked up
         session.modified = True
 
         if "WLS-Response" in request.args:
@@ -469,7 +469,7 @@ class AuthDecorator(object):
         """
         Check if an authenticated user is authorised.
 
-        The default implementation requires the prinicpal to be in
+        The default implementation requires the principal to be in
         the whitelist :attr:`require_principal` (if it is not ``None``, in
         which case any principal is allowed) and the intersection of
         :attr:`require_ptags` and `ptags` to be non-empty (unless

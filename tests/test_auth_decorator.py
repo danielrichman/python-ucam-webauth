@@ -229,7 +229,7 @@ class TestAuthDecorator(object):
 
         self.time.advance(600)
 
-        # reauth due to expirey: diff attrs from WLS; should change
+        # reauth due to expiry: diff attrs from WLS; should change
         self.check_auth(rig, principal="other",
                         ptags=set(["current", "blah", "lkjf"]), life=642)
         issue = self.time()
@@ -388,7 +388,7 @@ class TestAuthDecorator(object):
         self.time.advance(301)
         self.check_auth(rig) # reauth
 
-    def test_expires_combinations_wls_life_ommitted(self):
+    def test_expires_combinations_wls_life_omitted(self):
         # case 1: wls life enabled but not provided by WLS
         # case 2: wls disabled but provided by WLS
 
@@ -495,7 +495,7 @@ class TestAuthDecorator(object):
             assert r.status_code == 401
 
     def test_require_default(self):
-        self.check_auth(TestRig(), prinicpal="something",
+        self.check_auth(TestRig(), principal="something",
                         ptags=set(["current"]))
         self.check_auth(TestRig(), principal="anything",
                         ptags=set(["current", "another"]))

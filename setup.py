@@ -7,7 +7,7 @@ with open(filename) as f:
 
 setup(
     name = "python-raven",
-    version = "0.3",
+    version = "0.3.1",
     packages = ["raven", "ucam_webauth"],
     package_data = {"raven": ["keys/pubkey*.crt"]},
     install_requires = ["M2Crypto", "setuptools"],

@@ -248,7 +248,7 @@ class Request(object):
 
         The ucam-webauth protocol does not specify any restrictions on the
         content of params. However, awful things may happen if you put
-        arbitary binary data in here. The Raven server appears to interpret
+        arbitrary binary data in here. The Raven server appears to interpret
         non-ascii contents as latin-1, turn them into html entities in order
         to put them in a hidden HTML input element, then turn them back into
         (hopefully) the same binary data to be returned in the Response. As a
@@ -286,7 +286,7 @@ class Request(object):
         self.fail = fail
 
         # We encode now so that we can check the parameters are sane,
-        # though the encoded versions arn't needed until __str__
+        # though the encoded versions aren't needed until __str__
 
         if encode_strings:
             self._desc_encoded = self._encode_printable(desc)
@@ -470,7 +470,7 @@ class Response(object):
 
     """
 
-    # Note that "ptags" is ommitted in a version 1 response.
+    # Note that "ptags" is omitted in a version 1 response.
     _response_fields = ("ver", "status", "msg", "issue", "id", "url",
                         "principal", "ptags", "auth", "sso", "life",
                         "params", "kid", "sig")
@@ -507,7 +507,7 @@ class Response(object):
 
     def _split_string(self, string):
         """
-        Split the respone string into values
+        Split the response string into values
 
         Returns values, digested: a list of strings (the unparsed values) and
         the string that is hashed to calculate the signature
