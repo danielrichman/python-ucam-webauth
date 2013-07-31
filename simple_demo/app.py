@@ -121,7 +121,10 @@ def integration_login_raven_response():
 
     if r.success:
         # a no-op here, but important if you set iact or aauth
-        r.check_iact_aauth(None, None)
+        if not r.check_iact_aauth(None, None):
+            print "check_iact_aauth failed"
+            abort(403)
+
         session["user"] = r.principal
         session["auth"] = "raven"
         flash("Successfully logged in as {0}".format(r.principal))
