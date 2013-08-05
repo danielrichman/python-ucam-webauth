@@ -6,8 +6,6 @@ import base64
 import itertools
 from datetime import datetime
 from hashlib import sha1
-from M2Crypto.RSA import gen_key, new_pub_key, load_key
-from M2Crypto.util import quiet_genparam_callback
 
 from nose.tools import assert_raises
 
@@ -16,11 +14,13 @@ import raven
 import raven.demoserver
 
 
-_genkey = lambda: gen_key(1024, 65537, callback=quiet_genparam_callback)
-example_keys = dict((kid, _genkey()) for kid in "abc")
-_pubkey = lambda kid: new_pub_key(example_keys[kid].pub())
-_pubkeys = lambda kids: dict((kid, _pubkey(kid)) for kid in kids)
-
+class FakeRSA(object):
+    def __init__(self, kid):
+        self.kid = kid
+    def verify(self, digest, signature):
+        return self.sign(digest) == signature
+    def sign(self, digest):
+        return sha1(str(self.kid) + digest).digest()
 
 class Response_NoVerify(ucam_webauth.Response):
     old_version_ptags = set()
@@ -32,7 +32,7 @@ class Response_OldPtags(Response_NoVerify):
 
 class Response_KeysAB(ucam_webauth.Response):
     old_version_ptags = set()
-    keys = _pubkeys("ab")
+    keys = {"a": FakeRSA("a"), "b": FakeRSA("b")}
 
 class Response_MoreATypes(Response_NoVerify):
     @classmethod
@@ -60,8 +60,8 @@ class TestResponse(object):
         digested_data = fmt.format(ver=ver, **kwargs)
 
         if (kid or sign_kid) and sig is None:
-            key = example_keys[sign_kid or kid]
-            sig = key.sign(sha1(digested_data).digest(), 'sha1')
+            key = FakeRSA(sign_kid or kid)
+            sig = key.sign(sha1(digested_data).digest())
             table = string.maketrans("+/=", "-._")
             sig = base64.b64encode(sig).translate(table)
 

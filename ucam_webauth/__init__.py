@@ -76,8 +76,6 @@ from datetime import datetime
 from base64 import b64decode
 from hashlib import sha1
 
-from M2Crypto.RSA import RSAError
-
 if sys.version_info[0] >= 3:
     from urllib.parse import unquote, urlencode
 else:
@@ -368,8 +366,8 @@ class Response(object):
     .. attribute:: keys
 
         A dict mapping key identifiers (`kid`) to a RSA public key
-        (which must be an object with a ``verify(data, signature, algo)``
-        method; e.g., :class:`M2Crypto.RSA.RSA_pub`)
+        (which must be an object with a ``verify(digest, signature)``
+        method that returns a :class:`bool`)
 
     A Response object has the following attributes:
 
@@ -678,11 +676,7 @@ class Response(object):
             key = self.keys[self.kid]
             self.digest = sha1(self.digested_data).digest()
 
-            try:
-                valid = key.verify(self.digest, self.sig, 'sha1')
-            except RSAError:
-                valid = False
-            if not valid:
+            if not key.verify(self.digest, self.sig):
                 raise ValueError("Signature invalid")
 
             self.signed = True

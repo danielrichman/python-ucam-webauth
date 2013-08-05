@@ -1,3 +1,4 @@
 *.pyc
 dist
+build
 python_raven.egg-info

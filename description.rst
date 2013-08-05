@@ -1,9 +1,8 @@
 Python dependencies
 ===================
 
-* M2Crypto (`apt-get install python-m2crypto`; far easier than via pip)
 * nose (for unit testing only)
-* flask (for `simple_demo/`)
+* flask (for `raven.flask_glue` and `simple_demo/`)
 
 License
 =======

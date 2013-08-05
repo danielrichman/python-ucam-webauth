@@ -2,7 +2,6 @@
 
 ## Python dependencies
 
-  - M2Crypto (`apt-get install python-m2crypto`; far easier than via pip)
   - flask (for `raven.flask_glue` and `simple_demo/`)
 
 ### Development dependencies

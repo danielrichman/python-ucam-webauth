@@ -36,7 +36,6 @@ method by which you installed this package.
 **You should check that the copies of the certificates you have are
 correct / match the files at the links below**.
 
-* ``pubkey2.crt`` from `<https://raven.cam.ac.uk/project/keys/>`_
-* ``pubkey901.crt`` from
-  `<https://raven.cam.ac.uk/project/keys/demo_server/>`_
+* ``pubkey2`` from `<https://raven.cam.ac.uk/project/keys/>`_
+* ``pubkey901`` from `<https://raven.cam.ac.uk/project/keys/demo_server/>`_
 

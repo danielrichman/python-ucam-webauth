@@ -1,4 +1,3 @@
-M2Crypto
 setuptools
 nose
 Flask

@@ -1,16 +1,21 @@
 import os.path
-from setuptools import setup
+from setuptools import setup, Extension
 
 filename = os.path.join(os.path.dirname(__file__), 'description.rst')
 with open(filename) as f:
     long_description = f.read()
 
+rsamodule = Extension('ucam_webauth.rsa',
+                      sources=['ucam_webauth/rsa.c'],
+                      libraries=["ssl", "crypto"])
+
 setup(
     name = "python-raven",
-    version = "0.3.3",
+    version = "0.4",
     packages = ["raven", "ucam_webauth"],
-    package_data = {"raven": ["keys/pubkey*.crt"]},
-    install_requires = ["M2Crypto", "setuptools"],
+    package_data = {"raven": ["keys/pubkey*"]},
+    ext_modules = [rsamodule],
+    install_requires = ["setuptools"],
     extras_require = {"flask_glue": ["Flask"]},
     tests_require = ["nose", "Flask"],
     test_suite = 'nose.collector',

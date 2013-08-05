@@ -51,17 +51,19 @@ __license__ = "LGPL3"
 
 import os
 import os.path
-from M2Crypto.X509 import load_cert
 
 import ucam_webauth
+import ucam_webauth.rsa
+
 
 __all__ = ["PUBKEY2", "RAVEN_AUTH", "RAVEN_LOGOUT", "Request", "Response"]
 
 
 def _load_key(kid):
     filename = os.path.join(os.path.dirname(__file__),
-                            "keys/pubkey{0}.crt".format(kid))
-    return load_cert(filename).get_pubkey().get_rsa()
+                            "keys/pubkey{0}".format(kid))
+    with open(filename) as f:
+        return ucam_webauth.rsa.load_key(f.read())
 
 
 PUBKEY2 = _load_key("2")
