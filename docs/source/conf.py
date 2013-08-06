@@ -1,5 +1,20 @@
 # -*- coding: utf-8 -*-
 
+import sys
+
+# mock out the external C module, since it might not be built,
+# and isn't documented. The RSA objects returned are documented manually
+# by .. attribute, so returning None shouldn't be a problem
+class MockRSA(object):
+    def load_key(self, data):
+        return None
+    RSA = object
+
+import ucam_webauth
+ucam_webauth.rsa = MockRSA()
+sys.modules["ucam_webauth.rsa"] = ucam_webauth.rsa
+
+
 extensions = ['sphinx.ext.autodoc', 'sphinx.ext.viewcode']
 
 source_suffix = '.rst'
