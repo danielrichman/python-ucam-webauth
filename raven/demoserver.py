@@ -39,8 +39,6 @@ these use the settings of the Raven Demo Server,
 
 """
 
-from __future__ import unicode_literals
-
 from . import _load_key
 
 import ucam_webauth

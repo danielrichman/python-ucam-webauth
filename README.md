@@ -1,5 +1,8 @@
 # python-raven - Ucam-webauth and Raven application agent in Python
 
+This branch drops support for Python2, for those that don't like hybrid
+2/3 libraries.
+
 ## Python dependencies
 
   - flask (for `raven.flask_glue` and `simple_demo/`)

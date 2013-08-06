@@ -17,16 +17,10 @@
 
 """This module provides glue to make using python-raven with Flask easy"""
 
-from __future__ import unicode_literals
-
 import sys
 import logging
 import functools
-
-if sys.version_info[0] >= 3:
-    from urllib.parse import unquote_plus
-else:
-    from urllib import unquote_plus
+from urllib.parse import unquote_plus
 
 from calendar import timegm
 from time import time as time_float

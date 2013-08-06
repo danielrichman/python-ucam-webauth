@@ -20,8 +20,8 @@ extensions = ['sphinx.ext.autodoc', 'sphinx.ext.viewcode']
 source_suffix = '.rst'
 master_doc = 'index'
 
-project = u'python-raven'
-copyright = u'2013, Daniel Richman'
+project = 'python-raven'
+copyright = '2013, Daniel Richman'
 version = release = '0.3'
 
 exclude_patterns = []

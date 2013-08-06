@@ -25,10 +25,6 @@
 #include <Python.h>
 #include <structmember.h>
 
-#if PY_MAJOR_VERSION < 3
-#include <bytesobject.h>
-#endif
-
 typedef struct
 {
     PyObject_HEAD
@@ -42,13 +38,8 @@ static PyObject *verify(RSAObject *self, PyObject *args)
     int result = 0;
     PyObject *result_obj = NULL;
 
-#if PY_MAJOR_VERSION >= 3
     if (!PyArg_ParseTuple(args, "y*y*:verify", &digest, &signature))
         return NULL;
-#else
-    if (!PyArg_ParseTuple(args, "s*s*:verify", &digest, &signature))
-        return NULL;
-#endif
 
     if (digest.len != SHA_DIGEST_LENGTH)
     {
@@ -134,13 +125,8 @@ static PyObject *load_key(PyObject *self, PyObject *args)
     RSA *rsa = NULL;
     RSAObject *result = NULL;
 
-#if PY_MAJOR_VERSION >= 3
     if (!PyArg_ParseTuple(args, "y*:load_key", &data))
         return NULL;
-#else
-    if (!PyArg_ParseTuple(args, "s*:load_key", &data))
-        return NULL;
-#endif
 
     bio = BIO_new_mem_buf(data.buf, data.len);
     if (bio == NULL)
@@ -177,7 +163,6 @@ static PyMethodDef rsa_mod_methods[] = {
     {NULL, NULL, 0, NULL}
 };
 
-#if PY_MAJOR_VERSION >= 3
 static struct PyModuleDef rsa_module = {
     PyModuleDef_HEAD_INIT,
     "rsa", NULL, -1, rsa_mod_methods,
@@ -199,21 +184,3 @@ PyObject *PyInit_rsa(void)
     PyModule_AddObject(m, "RSA", (PyObject *) &RSAType);
     return m;
 }
-
-#else
-
-PyMODINIT_FUNC initrsa(void)
-{
-    PyObject *m;
-
-    if (PyType_Ready(&RSAType) < 0)
-        return;
-
-    m = Py_InitModule("rsa", rsa_mod_methods);
-    if (m == NULL)
-        return;
-
-    Py_INCREF(&RSAType);
-    PyModule_AddObject(m, "RSA", (PyObject *) &RSAType);
-}
-#endif

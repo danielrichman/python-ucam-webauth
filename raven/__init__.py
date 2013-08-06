@@ -39,8 +39,6 @@ response settings (default ptags and signing keys).
 
 """
 
-from __future__ import unicode_literals
-
 __name__ = "raven"
 __version__ = "0.3"
 __author__ = "Daniel Richman"

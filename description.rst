@@ -1,3 +1,6 @@
+This branch drops support for Python2, for those that don't like hybrid
+2/3 libraries.
+
 Python dependencies
 ===================
 

@@ -4,12 +4,7 @@ import functools
 import random
 import json
 from datetime import datetime
-
-if sys.version_info[0] >= 3:
-    from urllib.parse import urlencode, parse_qs
-else:
-    from urllib import urlencode
-    from urlparse import parse_qs
+from urllib.parse import urlencode, parse_qs
 
 from nose.tools import assert_raises
 

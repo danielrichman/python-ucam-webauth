@@ -59,8 +59,6 @@ and more information can be found at `<https://raven.cam.ac.uk/project/>`_.
 
 """
 
-from __future__ import unicode_literals
-
 __name__ = "ucam_webauth"
 __version__ = "0.3"
 __author__ = "Daniel Richman"
@@ -73,21 +71,8 @@ import sys
 import re
 from datetime import datetime
 from hashlib import sha1
-
-if sys.version_info[0] >= 3:
-    from base64 import b64decode
-    maketrans = bytes.maketrans
-    from urllib.parse import unquote, urlencode
-else:
-    from string import maketrans
-    from urllib import unquote, urlencode
-    import base64
-
-    def b64decode(value, validate):
-        result = base64.b64decode(value)
-        if validate and base64.b64encode(result) != value:
-            raise ValueError("Non-base64 digit found")
-        return result
+from base64 import b64decode
+from urllib.parse import unquote, urlencode
 
 
 __all__ = ["Status", "STATUS_CODE_LIST", "STATUS_CODES",
@@ -480,14 +465,13 @@ class Response(object):
     _response_fields = ("ver", "status", "msg", "issue", "id", "url",
                         "principal", "ptags", "auth", "sso", "life",
                         "params", "kid", "sig")
-    _b64_trans = maketrans(b"-._", b"+/=")
+    _b64_trans = bytes.maketrans(b"-._", b"+/=")
 
     old_version_ptags = frozenset()
     keys = {}
 
     def __init__(self, string):
-        if sys.version_info[0] >= 3 and \
-                isinstance(string, (bytes, bytearray)):
+        if isinstance(string, (bytes, bytearray)):
             # rfc3986: urls should be utf-8
             string = string.decode('utf-8')
 

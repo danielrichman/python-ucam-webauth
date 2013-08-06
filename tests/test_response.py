@@ -1,16 +1,9 @@
-from __future__ import unicode_literals
-
 import sys
 import os.path
 import base64
 import itertools
 from datetime import datetime
 from hashlib import sha1
-
-if sys.version_info[0] >= 3:
-    maketrans = bytes.maketrans
-else:
-    from string import maketrans
 
 from unittest.case import SkipTest
 from nose.tools import assert_raises
@@ -68,7 +61,7 @@ class TestResponse(object):
         if (kid or sign_kid) and sig is None:
             key = FakeRSA(sign_kid or kid)
             sig = key.sign(sha1(digested_data.encode('utf-8')).digest())
-            table = maketrans(b"+/=", b"-._")
+            table = bytes.maketrans(b"+/=", b"-._")
             sig = base64.b64encode(sig).translate(table).decode('ascii')
 
         if kid is None:
@@ -370,9 +363,6 @@ class TestResponse(object):
                 assert result is c_expect, m
 
     def test_decodes_utf8_if_given_bytes(self):
-        if sys.version_info[0] < 3:
-            raise SkipTest
-
         # testing a signed string is particularly important since an exact
         # binary copy needs to survive decoding and encoding
         string = self.respstr(status="410", msg="message",

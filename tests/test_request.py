@@ -1,12 +1,7 @@
-from __future__ import unicode_literals
-
 import sys
-from nose.tools import assert_raises
+from urllib.parse import parse_qs
 
-if sys.version_info[0] >= 3:
-    from urllib.parse import parse_qs
-else:
-    from urlparse import parse_qs
+from nose.tools import assert_raises
 
 from ucam_webauth import Request, ATYPE_PWD
 import raven

@@ -70,22 +70,19 @@ class TestRSA(object):
     def test_rejects_garbage_key(self):
         assert_raises(TypeError, load_key, 123)
         assert_raises(ValueError, load_key, b"asdfasdf")
-        if sys.version_info[0] >= 3:
-            assert_raises(TypeError, load_key, "asdfasdf")
+        assert_raises(TypeError, load_key, "asdfasdf")
 
     def test_rejects_garbage_digest(self):
         key = load_key(key_pkcs1s["a"])
         signature = signatures["1a"]
         assert_raises(TypeError, key.verify, 123, signature)
-        if sys.version_info[0] >= 3:
-            assert_raises(TypeError, key.verify, "short digest", signature)
+        assert_raises(TypeError, key.verify, "short digest", signature)
 
     def test_rejects_garbage_signature(self):
         key = load_key(key_pkcs1s["a"])
         digest = digests['1']
         assert_raises(TypeError, key.verify, digest, 123)
-        if sys.version_info[0] >= 3:
-            assert_raises(TypeError, key.verify, digest, "asdf")
+        assert_raises(TypeError, key.verify, digest, "asdf")
 
     def test_rejects_bad_length_digest(self):
         key = load_key(key_pkcs1s["a"])
