@@ -181,7 +181,7 @@ static PyMethodDef rsa_mod_methods[] = {
 static struct PyModuleDef rsa_module = {
     PyModuleDef_HEAD_INIT,
     "rsa", NULL, -1, rsa_mod_methods,
-    NULL, NULL, NULL, NULL, NULL
+    NULL, NULL, NULL, NULL
 };
 
 PyObject *PyInit_rsa(void)

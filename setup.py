@@ -11,7 +11,7 @@ rsamodule = Extension('ucam_webauth.rsa',
 
 setup(
     name = "python-raven",
-    version = "0.4",
+    version = "0.5",
     packages = ["raven", "ucam_webauth"],
     package_data = {"raven": ["keys/pubkey*"]},
     ext_modules = [rsamodule],
@@ -33,7 +33,11 @@ setup(
         "Intended Audience :: Developers",
         "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
         "Operating System :: OS Independent",
-        "Programming Language :: Python :: 2"
+        "Framework :: Flask",
+        "Topic :: Internet :: WWW/HTTP :: Dynamic Content :: "
+                    "CGI Tools/Libraries",
+        "Programming Language :: Python :: 2",
+        "Programming Language :: Python :: 3"
     ]
 )
 

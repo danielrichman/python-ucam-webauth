@@ -19,9 +19,14 @@
 
 from __future__ import unicode_literals
 
+import sys
 import logging
 import functools
-import urllib
+
+if sys.version_info[0] >= 3:
+    from urllib.parse import unquote_plus
+else:
+    from urllib import unquote_plus
 
 from calendar import timegm
 from time import time as time_float
@@ -412,7 +417,7 @@ class AuthDecorator(object):
         # check that nothing funny is going on (that the dumb parsing done
         # above is correct)
         response_start = start + len(".WLS-Response=")
-        response_part = urllib.unquote_plus(actual_url[response_start:])
+        response_part = unquote_plus(actual_url[response_start:])
         if response_part != request.args["WLS-Response"]:
             logger.debug("WLS-Response removal failed "
                          "(removed: %r, request.args: %r)",

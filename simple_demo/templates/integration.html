@@ -32,7 +32,7 @@
     <p><a href="{{ url_for('integration_login_raven') }}">Log In via Raven</a></p>
     <form method="POST" action="{{ url_for('integration_login_username') }}">
         <label for="username">Username:</label>
-        <input type="text" name="username" id="username">
+        <input type="text" name="username" id="username" required>
         <button type="submit">Log in via some other method</button>
     </form>
 {% endif %}

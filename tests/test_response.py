@@ -1,12 +1,18 @@
 from __future__ import unicode_literals
 
+import sys
 import os.path
-import string
 import base64
 import itertools
 from datetime import datetime
 from hashlib import sha1
 
+if sys.version_info[0] >= 3:
+    maketrans = bytes.maketrans
+else:
+    from string import maketrans
+
+from unittest.case import SkipTest
 from nose.tools import assert_raises
 
 import ucam_webauth
@@ -20,7 +26,7 @@ class FakeRSA(object):
     def verify(self, digest, signature):
         return self.sign(digest) == signature
     def sign(self, digest):
-        return sha1(str(self.kid) + digest).digest()
+        return sha1(self.kid.encode('utf-8') + digest).digest()
 
 class Response_NoVerify(ucam_webauth.Response):
     old_version_ptags = set()
@@ -61,9 +67,9 @@ class TestResponse(object):
 
         if (kid or sign_kid) and sig is None:
             key = FakeRSA(sign_kid or kid)
-            sig = key.sign(sha1(digested_data).digest())
-            table = string.maketrans("+/=", "-._")
-            sig = base64.b64encode(sig).translate(table)
+            sig = key.sign(sha1(digested_data.encode('utf-8')).digest())
+            table = maketrans(b"+/=", b"-._")
+            sig = base64.b64encode(sig).translate(table).decode('ascii')
 
         if kid is None:
             kid = ""
@@ -256,11 +262,16 @@ class TestResponse(object):
         assert_raises(ValueError, Response_NoVerify, string)
 
     def test_rejects_bad_base64(self):
+        test_data = "~~ not base 64 ///"
+
+        # we want something invalid that parses if validate=False:
+        assert base64.b64decode(test_data)
+
         string = self.respstr(status="200",
                     issue="20130701T102345Z", id="unique",
                     url="http://drichman.net/example",
                     principal="djr61", auth="pwd",
-                    kid="a", sig="~~ not base 64")
+                    kid="a", sig=test_data)
 
         # parsing of the b64 is done in _parse_base_types
         assert_raises(ValueError, Response_NoVerify, string)
@@ -357,6 +368,21 @@ class TestResponse(object):
                 m = "failed: auth={0} sso={1} iact={2} aauth={3} expect={4}" \
                         .format(c_auth, c_sso, c_iact, c_aauth, c_expect)
                 assert result is c_expect, m
+
+    def test_decodes_utf8_if_given_bytes(self):
+        if sys.version_info[0] < 3:
+            raise SkipTest
+
+        # testing a signed string is particularly important since an exact
+        # binary copy needs to survive decoding and encoding
+        string = self.respstr(status="410", msg="message",
+                    issue="20130701T102345Z", id="unique",
+                    url="http://drichman.net/example",
+                    params="some unicode \u0636", kid="a")
+
+        resp = Response_KeysAB(string.encode('utf-8'))
+        assert resp.signed == True
+        assert resp.params == "some unicode \u0636"
 
     def test_raven_demoserver(self):
         response = raven.demoserver.Response(

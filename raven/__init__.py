@@ -62,7 +62,7 @@ __all__ = ["PUBKEY2", "RAVEN_AUTH", "RAVEN_LOGOUT", "Request", "Response"]
 def _load_key(kid):
     filename = os.path.join(os.path.dirname(__file__),
                             "keys/pubkey{0}".format(kid))
-    with open(filename) as f:
+    with open(filename, 'rb') as f:
         return ucam_webauth.rsa.load_key(f.read())
 
 

@@ -1,3 +1,5 @@
+from __future__ import unicode_literals, print_function
+
 import os
 import inspect
 import logging
@@ -111,18 +113,18 @@ def integration_login_raven():
 def integration_login_raven_response():
     r = raven.Response(request.args["WLS-Response"])
     if r.url != request.base_url:
-        print "Bad url"
+        print("Bad url")
         abort(400)
 
     issue_delta = (datetime.utcnow() - r.issue).total_seconds()
     if not -5 < issue_delta < 15:
-        print "Bad issue"
+        print("Bad issue")
         abort(403)
 
     if r.success:
         # a no-op here, but important if you set iact or aauth
         if not r.check_iact_aauth(None, None):
-            print "check_iact_aauth failed"
+            print("check_iact_aauth failed")
             abort(403)
 
         session["user"] = r.principal

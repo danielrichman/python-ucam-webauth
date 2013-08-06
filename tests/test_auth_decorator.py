@@ -1,10 +1,15 @@
+import sys
 import time
 import functools
 import random
 import json
-from urllib import urlencode
-from urlparse import parse_qs
 from datetime import datetime
+
+if sys.version_info[0] >= 3:
+    from urllib.parse import urlencode, parse_qs
+else:
+    from urllib import urlencode
+    from urlparse import parse_qs
 
 from nose.tools import assert_raises
 
@@ -190,7 +195,7 @@ class TestAuthDecorator(object):
 
             response = client.get("/decorated", follow_redirects=True)
             assert response.status_code == 200
-            assert response.data == "Hello World"
+            assert response.data == b"Hello World"
 
     def check_remembered_auth(self, rig):
         with rig as (client, wls, views):
@@ -198,7 +203,7 @@ class TestAuthDecorator(object):
 
             response = client.get("/decorated")
             assert response.status_code == 200
-            assert response.data == "Hello World"
+            assert response.data == b"Hello World"
 
     def check_auth_abort(self, rig, code, **kwargs):
         with rig as (client, wls, views):
@@ -424,7 +429,7 @@ class TestAuthDecorator(object):
 
             response = client.get("/decorated", follow_redirects=True)
             assert response.status_code == 200
-            assert response.data == "Hello World"
+            assert response.data == b"Hello World"
 
     def test_sets_session_modified(self):
         O = flask.sessions.SecureCookieSessionInterface

@@ -1,7 +1,7 @@
 {% macro print_thing(thing) %}
     {% if thing is mapping %}
         <ul>
-            {% for key, value in thing.iteritems() %}
+            {% for key, value in thing.items() %}
                 <li><b>{{ key }}</b>: {{ print_thing(value) }}</li>
             {% endfor %}
         </ul>

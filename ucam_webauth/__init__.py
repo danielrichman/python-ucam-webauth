@@ -71,15 +71,23 @@ __license__ = "LGPL3"
 
 import sys
 import re
-from string import maketrans
 from datetime import datetime
-from base64 import b64decode
 from hashlib import sha1
 
 if sys.version_info[0] >= 3:
+    from base64 import b64decode
+    maketrans = bytes.maketrans
     from urllib.parse import unquote, urlencode
 else:
+    from string import maketrans
     from urllib import unquote, urlencode
+    import base64
+
+    def b64decode(value, validate):
+        result = base64.b64decode(value)
+        if validate and base64.b64encode(result) != value:
+            raise ValueError("Non-base64 digit found")
+        return result
 
 
 __all__ = ["Status", "STATUS_CODE_LIST", "STATUS_CODES",
@@ -100,9 +108,9 @@ class AuthenticationType(object):
 
         a sentence describing it
 
-    Note that comparing an :class:`AuthenticationType` object with a string
-    (or another :class:`AuthenticationType` object) will compare the
-    :attr:`name` attribute only. Further, ``str(atype) == atype.name``.
+    Note that comparing an :class:`AuthenticationType` object with a
+    :class:`str` (or another :class:`AuthenticationType` object) will compare
+    the :attr:`name` attribute only. Further, ``str(atype) == atype.name``.
     """
 
     def __init__(self, name, description):
@@ -472,12 +480,17 @@ class Response(object):
     _response_fields = ("ver", "status", "msg", "issue", "id", "url",
                         "principal", "ptags", "auth", "sso", "life",
                         "params", "kid", "sig")
-    _b64_trans = maketrans("-._", "+/=")
+    _b64_trans = maketrans(b"-._", b"+/=")
 
     old_version_ptags = frozenset()
     keys = {}
 
     def __init__(self, string):
+        if sys.version_info[0] >= 3 and \
+                isinstance(string, (bytes, bytearray)):
+            # rfc3986: urls should be utf-8
+            string = string.decode('utf-8')
+
         values, self.digested_data = self._split_string(string)
 
         if len(values) != len(self._response_fields):
@@ -514,7 +527,8 @@ class Response(object):
         values = string.split("!")
 
         assert self._response_fields[-2:] == ("kid", "sig")
-        digested = '!'.join(values[:-2])
+        # urls should be utf-8, so this should recover the original data
+        digested = '!'.join(values[:-2]).encode('utf-8')
 
         ver = int(values[0])
 
@@ -605,7 +619,7 @@ class Response(object):
         string = string.encode("ascii")
         string = string.translate(cls._b64_trans)
         try:
-            return b64decode(string)
+            return b64decode(string, validate=True)
         except TypeError: # apparently
             raise ValueError("Invalid base64 (sig)")
 
