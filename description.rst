@@ -1,3 +1,7 @@
+This branch (m2crypto) contains a version that uses M2Crypto instead of 
+building an external C module, for those that would prefer it.
+It therefore does not support Python3.
+
 Python dependencies
 ===================
 

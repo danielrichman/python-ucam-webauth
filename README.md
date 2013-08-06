@@ -1,5 +1,9 @@
 # python-raven - Ucam-webauth and Raven application agent in Python
 
+This branch (m2crypto) contains a version that uses M2Crypto instead of 
+building an external C module, for those that would prefer it.
+It therefore does not support Python3.
+
 ## Python dependencies
 
   - M2Crypto (`apt-get install python-m2crypto`; far easier than via pip)
