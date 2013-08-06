@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+
 import ucam_webauth
 
 class TestStatus(object):
