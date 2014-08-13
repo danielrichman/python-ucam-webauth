@@ -304,7 +304,8 @@ class AuthDecorator(object):
         if "WLS-Response" in request.args:
             if request.method != "GET":
                 abort(405)
-            if len(request.args.getlist("WLS-Response")) != 1:
+            if hasattr(request.args, "getlist") and \
+                    len(request.args.getlist("WLS-Response")) != 1:
                 abort(400)
 
             if "_ucam_webauth" not in session:
