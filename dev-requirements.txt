@@ -2,4 +2,3 @@ setuptools
 nose
 Flask
 Sphinx
-Sphinx-PyPI-upload

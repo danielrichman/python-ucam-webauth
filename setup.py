@@ -42,4 +42,4 @@ setup(
 )
 
 # python setup.py test
-# python setup.py build_sphinx sdist upload upload_sphinx
+# python setup.py build_sphinx sdist upload upload_docs
