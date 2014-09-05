@@ -1,8 +1,9 @@
 # python-raven - Ucam-webauth and Raven application agent in Python
 
-## Python dependencies
+## Dependencies
 
-  - flask (for `raven.flask_glue` and `simple_demo/`)
+  - OpenSSL
+  - Optionally, flask (for `raven.flask_glue` and `simple_demo/`)
 
 ### Development dependencies
 
