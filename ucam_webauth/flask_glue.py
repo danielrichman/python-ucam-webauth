@@ -251,9 +251,6 @@ class AuthDecorator(object):
             del session["_ucam_webauth"]
         return redirect(self.logout_url, code=303)
 
-    def _wrapped(self, view_function, view_args):
-        """Decorated functions are replaced with this function"""
-
     def before_request(self):
         """
         The "main" method
