@@ -20,6 +20,8 @@
 from __future__ import unicode_literals
 
 import sys
+import os
+import base64
 import logging
 import functools
 
@@ -179,8 +181,12 @@ class AuthDecorator(object):
         functools.update_wrapper(wrapper, view_function)
         return wrapper
 
+    @property
+    def _state(self):
+        return session.get("_ucam_webauth", {}).get("state", {})
+
     def _prop_helper(self, name):
-        return session.get("_ucam_webauth", {}).get(name, None)
+        return self._state.get(name, None)
 
     @property
     def principal(self):
@@ -219,10 +225,9 @@ class AuthDecorator(object):
     @property
     def expires(self):
         """When (:class:`int` unix timestamp) the current auth. will expire"""
-        state = session.get("_ucam_webauth", {})
-        if "principal" not in state:
+        if "principal" not in self._state:
             return None
-        expires = self._get_expires(state)
+        expires = self._get_expires(self._state)
         if len(expires) == 0:
             return None
         else:
@@ -239,16 +244,15 @@ class AuthDecorator(object):
         `reason` will be one of "config max life", "wls life" or "inactive".
         """
 
-        state = session.get("_ucam_webauth", {})
-        if "principal" not in state:
+        if "principal" not in self._state:
             return None
-        return self._get_expires(state)
+        return self._get_expires(self._state)
 
     def logout(self):
         """Clear the auth., and return a redirect to the WLS' logout page"""
-        if "_ucam_webauth" in session:
+        if self._state != {}:
             session.modified = True
-            del session["_ucam_webauth"]
+            del session["_ucam_webauth"]["state"]
         return redirect(self.logout_url, code=303)
 
     def before_request(self):
@@ -265,6 +269,10 @@ class AuthDecorator(object):
           * checks if ``flask.session`` is empty - if so, then we deduce that
             the user has cookies disabled, and must abort immediately with
             403 Forbidden, or we will start a redirect loop
+          * checks if `params` matches the token we set (and saved in
+            ``flask.session``) when redirecting to Raven
+            (preventing replaying successful authentications from other
+            sites onto ours)
           * checks if the authentication method used is permitted by `aauth`
             and user-interaction respected `iact` - if not, abort with
             400 Bad Request
@@ -315,10 +323,7 @@ class AuthDecorator(object):
             r = self.response_class(request.args["WLS-Response"])
             return self._handle_response(r)
 
-        if "_ucam_webauth" not in session:
-            session["_ucam_webauth"] = {}
-
-        state = session["_ucam_webauth"]
+        state = self._state
 
         if state.get("response_failure", False):
             del state["response_failure"]
@@ -348,6 +353,8 @@ class AuthDecorator(object):
         Deal with a response in the query string of this request
 
         * checks `url`, `iact`, `aauth` and `issue`
+        * checks that the `params` token matches the one saved in
+          ``flask.session``
         * starts a new session if necessary (see :meth:`session_new`)
         * sets the 'auth failed' flag if necessary
         * redirects to remove ``WLS-Response`` from the url/query string
@@ -356,6 +363,12 @@ class AuthDecorator(object):
 
         url_without_response = self._check_url(response.url)
         if url_without_response is None:
+            abort(400)
+
+        token = session.get("_ucam_webauth", {}).get("params_token")
+        if token is None or response.params != token:
+            logger.warning("params token mismatch: session=%s response=%s",
+                           token, response.params)
             abort(400)
 
         if response.success:
@@ -374,14 +387,14 @@ class AuthDecorator(object):
                 logger.debug("new session")
                 self.session_new()
 
-            session["_ucam_webauth"] = \
+            session["_ucam_webauth"]["state"] = \
                     {"principal": response.principal,
                      "ptags": list(response.ptags),
                      "issue": issue, "life": response.life,
                      "last": time()}
 
         else:
-            session["_ucam_webauth"] = {"response_failure": True}
+            session["_ucam_webauth"]["state"] = {"response_failure": True}
 
         return redirect(url_without_response, code=303)
 
@@ -393,10 +406,6 @@ class AuthDecorator(object):
         the URL in the WLS' response, which is equal to the URL specified
         in the request to the WLS and is the URL to which the client was
         redirected after authentication.
-
-        This is necessary to avoid an evil administrator of another website
-        capturing and replaying successful authentications to his website to
-        us.
         """
 
         actual_url = request.url
@@ -451,7 +460,7 @@ class AuthDecorator(object):
     def _is_new_session(self, response):
         """Is this a new session, or reauthentication (after expiry)?"""
 
-        state = session["_ucam_webauth"]
+        state = self._state
         if "principal" not in state:
             return False
 
@@ -461,8 +470,17 @@ class AuthDecorator(object):
 
     def _redirect_to_wls(self):
         """Create a request and return a redirect to the WLS"""
-        req = self.request_class(request.url, self.desc, self.aauth,
-                                 self.iact, self.msg)
+        if "_ucam_webauth" not in session:
+            session["_ucam_webauth"] = {}
+        if "params_token" not in session["_ucam_webauth"]:
+            session["_ucam_webauth"]["params_token"] = \
+                    base64.b64encode(os.urandom(18)).decode("ascii")
+
+        token = session["_ucam_webauth"]["params_token"]
+
+        req = self.request_class(url=request.url, desc=self.desc,
+                                 aauth=self.aauth, iact=self.iact,
+                                 msg=self.msg, params=token)
         return redirect(str(req), code=303)
 
     def _get_expires(self, state):

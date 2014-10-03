@@ -1,6 +1,7 @@
 from __future__ import unicode_literals
 
 import sys
+import base64
 import time
 import functools
 import random
@@ -37,6 +38,16 @@ class FakeRequest(ucam_webauth.Request):
         query_string = ucam_webauth.Request.__str__(self)
         return "/fake_wls?" + query_string
 
+class FakeOS(object):
+    def set_urandom(self, v):
+        self._urandom = base64.b64decode(v)
+
+    def __init__(self):
+        self.set_urandom("aaaa")
+
+    def urandom(self, amt):
+        return self._urandom
+
 # Rather than write something that generates the WLS response format....
 def make_response(**kwargs):
     now = ucam_webauth.flask_glue.time()
@@ -45,7 +56,8 @@ def make_response(**kwargs):
     values = dict(ver=3, status=ucam_webauth.STATUS_SUCCESS,
                   url="http://localhost/decorated",
                   issue=now, signed=True, ptags=set(["current"]),
-                  auth="pwd", sso=set(), life=86400, kid="A")
+                  auth="pwd", sso=set(), life=86400, kid="A",
+                  params="aaaa")
     values.update(kwargs)
 
     for k in ("sso", "ptags"):
@@ -89,6 +101,8 @@ class WLS(object):
             request["ver"] = "3"
         if not request["url"].startswith("http"):
             request["url"] = "http://localhost/"
+        if "params" not in request:
+            request["params"] = "aaaa"
         self._expect.append((request, response))
 
     def check(self):
@@ -183,8 +197,11 @@ class TestRig(object):
 class TestAuthDecorator(object):
     def setup(self):
         self.old_ucam_webauth_time = ucam_webauth.flask_glue.time
+        self.old_ucam_webauth_os = ucam_webauth.flask_glue.os
         self.time = FakeTime()
+        self.os = FakeOS()
         ucam_webauth.flask_glue.time = self.time
+        ucam_webauth.flask_glue.os = self.os
 
     def teardown(self):
         ucam_webauth.flask_glue.time = self.old_ucam_webauth_time
@@ -787,7 +804,7 @@ class TestAuthDecorator(object):
         self.check_auth(rig)
 
         with rig.session_transaction() as session:
-            assert session["_ucam_webauth"]
+            assert session["_ucam_webauth"]["state"] != {}
 
         with rig as (client, wls, views):
             r = client.get("/logout")
@@ -795,7 +812,7 @@ class TestAuthDecorator(object):
             assert r.headers["location"] == "http://localhost/wls_logout"
 
         with rig.session_transaction() as session:
-            assert "_ucam_webauth" not in session
+            assert session["_ucam_webauth"] == {"params_token": "aaaa"}
 
         self.check_auth(rig)
 
@@ -816,7 +833,8 @@ class TestAuthDecorator(object):
             url, query = r.location.split("?")
             assert url == "/fake_wls"
             assert parse_qs(query) == \
-                {"url": ["http://localhost/before_request_test"], "ver": ["3"]}
+                {"url": ["http://localhost/before_request_test"],
+                 "ver": ["3"], "params": ["aaaa"]}
             session_save = flask.session.copy()
 
         # answer 1
@@ -851,3 +869,68 @@ class TestAuthDecorator(object):
             flask.session.update(session_save_200)
             r = before_request()
             assert r == None
+
+    def test_random_params(self):
+        rig = TestRig()
+        self.os.set_urandom("bbbbaaaa")
+
+        with rig as (client, wls, views):
+            wls.expect({"params": "bbbbaaaa"},
+                       make_response(principal="djr61", params="bbbbaaaa"))
+            views.expect()
+
+            response = client.get("/decorated", follow_redirects=True)
+            assert response.status_code == 200
+            assert response.data == b"Hello World"
+
+    def test_checks_params(self):
+        rig = TestRig()
+
+        with rig as (client, wls, views):
+            wls.expect({"params": "aaaa"},
+                       make_response(principal="djr61", params="dddd"))
+
+            response = client.get("/decorated", follow_redirects=True)
+            assert response.status_code == 400
+
+    def test_params_token_doesnt_break_multiple_auths(self):
+        with TestRig() as (client, wls, views):
+            wls.expect({"params": "cccc"},
+                       make_response(principal="djr61", params="cccc"))
+            views.expect()
+
+            # Start authenticating...
+            self.os.set_urandom("cccc")
+            redir = client.get("/decorated")
+            assert redir.status_code == 303 
+            _, query = redir.location.split("?")
+            assert parse_qs(query)["params"] == ["cccc"]
+            # ... but don't follow through yet ...
+
+            # Start a second auth...
+            self.os.set_urandom("dddd")
+            redir2 = client.get("/decorated")
+            assert redir2.status_code == 303
+            # ... but abandon it ...
+
+            # ... now pick the first auth back up again and complete it
+            # https://github.com/mitsuhiko/flask/issues/968
+            url = redir.location[len("http://localhost"):]
+            response = client.get(url, follow_redirects=True)
+            assert response.status_code == 200
+
+        with TestRig() as (client, wls, views):
+            wls.expect({"params": "eeee"},
+                       make_response(principal="djr61", params="eeee"))
+            views.expect()
+
+            # as above, but now follow the second auth to completion instead
+            self.os.set_urandom("eeee")
+            redir = client.get("/decorated")
+            assert redir.status_code == 303 
+            _, query = redir.location.split("?")
+            assert parse_qs(query)["params"] == ["eeee"]
+
+            self.os.set_urandom("ffff")
+            response = client.get("/decorated", follow_redirects=True)
+            assert response.status_code == 200
