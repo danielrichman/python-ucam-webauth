@@ -52,7 +52,7 @@ If checking `url` (above) is a pain, you could:
 * include that string as `params` in the :class:`ucam_webauth.Request`
 * check that they match in the :class:`ucam_webauth.Response`
 
-The principle is similar to that of an XSS token for submitting forms.
+The principle is similar to that of an CSRF token for submitting forms.
 
 This is what :class:`ucam_webauth.flask_glue.AuthDecorator` does.
 
