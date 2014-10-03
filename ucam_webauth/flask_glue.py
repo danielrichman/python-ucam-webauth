@@ -126,7 +126,7 @@ class AuthDecorator(object):
     To log the user out, call :meth:`logout`, which will clear the session
     state. Further, :meth:`logout` returns a :meth:`flask.redirect` to the
     Raven logout page. Be aware that the default flask session handlers are
-    susceptibleto replay attacks.
+    susceptible to replay attacks.
 
     POST requests:
     Since it will redirect to the WLS and back, the auth decorator will
@@ -258,8 +258,10 @@ class AuthDecorator(object):
         * checks if there is a response from the WLS
 
           * checks if the current URL matches that which the WLS said it
-            redirected to (avoid an evil admin of another site replaying
-            successful authentications)
+            redirected to (the intention is to avoid an evil admin of another
+            site replaying successful authentications to us, but it isn't
+            perfect unless you're careful with your `Host` and
+            `X-Forwarded-Host` headers)
           * checks if ``flask.session`` is empty - if so, then we deduce that
             the user has cookies disabled, and must abort immediately with
             403 Forbidden, or we will start a redirect loop

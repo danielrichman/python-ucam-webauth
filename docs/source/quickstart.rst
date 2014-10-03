@@ -97,6 +97,10 @@ Integrating with existing authentication or session management
         r = raven.Response(request.args["WLS-Response"])
 
         # checking url, issue, iact and aauth is very important!
+        # Werkzeug deduces the hostname from the 'Host' or
+        # 'X-Forwarded-Host' headers. A whitelist is safest, or you
+        # may like to pass a secret in `params`.
+        request.trusted_hosts = {'www.danielrichman.co.uk'}
         if r.url != request.base_url:
             print "Bad url"
             abort(400)
