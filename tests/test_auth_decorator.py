@@ -140,6 +140,8 @@ class TestRig(object):
         self.app.testing = True
         self.app.secret_key = str(random.random())
 
+        kwargs.setdefault("can_trust_request_host", True)
+
         self.authdecorator = cls(*args, **kwargs)
         view = self.authdecorator(self.decorated)
 
@@ -574,8 +576,8 @@ class TestAuthDecorator(object):
 
     def test_custom_check_auth(self):
         class MyAuthDecorator(AuthDecorator):
-            def __init__(self):
-                AuthDecorator.__init__(self)
+            def __init__(self, *args, **kwargs):
+                AuthDecorator.__init__(self, *args, **kwargs)
                 self._expect_check = []
 
             def check_authorised(self, principal, ptags):
@@ -934,3 +936,19 @@ class TestAuthDecorator(object):
             self.os.set_urandom("ffff")
             response = client.get("/decorated", follow_redirects=True)
             assert response.status_code == 200
+
+    def test_trusted_hosts(self):
+        self.check_auth(TestRig())
+
+        rig = TestRig(can_trust_request_host=False)
+        class R(flask.Request):
+            trusted_hosts = {'localhost'}
+        rig.app.request_class = R
+        self.check_auth(rig)
+
+        rig = TestRig(can_trust_request_host=False)
+        with rig as (client, wls, views):
+            wls.expect({}, make_response(principal='djr61'))
+
+            assert_raises(RuntimeError,
+                          client.get, "/decorated", follow_redirects=True)

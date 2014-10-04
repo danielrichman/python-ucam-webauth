@@ -60,6 +60,22 @@ class AuthDecorator(object):
     Note that since it uses flask.session, you'll need to set
     :attr:`app.secret_key`.
 
+    We need to be able to reliably determine the hostname of the current
+    website. This is retrieved from :attr:`flask.Request.url`.
+    By default, Werkzeug will respect the value of a ``X-Forwarded-Host``
+    header, which means that a man-in-the-middle can have someone authenticate
+    to *their* website, and forward the response from the WLS on to you.
+    You must either set :attr:`flask.Request.trusted_hosts`, for example
+    like so::
+
+        class R(flask.Request):
+            trusted_hosts = {'www.danielrichman.co.uk'}
+        app.request_class = R
+
+    ... or sanitise both the `Host` header *and* the `X-Forwarded-Host`
+    header in your web-server. If you choose the second option, set
+    `can_trust_request_host`.
+
     This tries to emulate the feel of applying mod_ucam_webauth to a file.
 
     The decorator wraps the view in a function that calls
@@ -106,6 +122,10 @@ class AuthDecorator(object):
     :type require_ptags: :class:`set` of :class:`str`, or ``None``
     :param require_ptags: require the ptags to contain `any` string in
                           `require_ptags` (i.e., non empty intersection)
+    :type can_trust_request_host: :class:`bool`
+    :param can_trust_request_host: Can we trust the hostname in
+                                   ``request.url``?
+                                   (see :ref:`checking-response-values`)
 
     More complex customisation is possible:
 
@@ -149,7 +169,8 @@ class AuthDecorator(object):
                     max_life=7200, use_wls_life=False,
                     inactive_timeout=None, issue_bounds=(15,5),
                     require_principal=None,
-                    require_ptags=frozenset(["current"])):
+                    require_ptags=frozenset(["current"]),
+                    can_trust_request_host=False):
         self.desc = desc
         self.aauth = aauth
         self.iact = iact
@@ -160,6 +181,7 @@ class AuthDecorator(object):
         self.issue_bounds = issue_bounds
         self.require_principal = require_principal
         self.require_ptags = require_ptags
+        self.can_trust_request_host = can_trust_request_host
 
     def __call__(self, view_function):
         """
@@ -422,6 +444,11 @@ class AuthDecorator(object):
         in the request to the WLS and is the URL to which the client was
         redirected after authentication.
         """
+
+        if not self.can_trust_request_host and request.trusted_hosts is None:
+            raise RuntimeError("Either set request.trusted_hosts, or sanitise "
+                               "Host/X-Forwarded-Host headers and pass "
+                               "can_trust_request_host = True")
 
         actual_url = request.url
 
