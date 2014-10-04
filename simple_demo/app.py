@@ -10,10 +10,16 @@ import raven
 import raven.demoserver
 import raven.flask_glue
 
+import flask
 from flask import Flask, request, render_template, redirect, \
                   url_for, abort, session, flash
+
+class Request(flask.Request):
+    trusted_hosts = {'localhost', '127.0.0.1'}
+
 app = Flask(__name__)
 
+app.request_class = Request
 app.config["SECRET_KEY"] = os.urandom(16)
 
 app.add_template_global(repr, name="repr")

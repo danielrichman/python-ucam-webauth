@@ -281,17 +281,13 @@ class AuthDecorator(object):
         * checks if there is a response from the WLS
 
           * checks if the current URL matches that which the WLS said it
-            redirected to (the intention is to avoid an evil admin of another
-            site replaying successful authentications to us, but it isn't
-            perfect unless you're careful with your `Host` and
-            `X-Forwarded-Host` headers)
+            redirected to (avoid an evil admin of another site replaying
+            successful authentications)
           * checks if ``flask.session`` is empty - if so, then we deduce that
             the user has cookies disabled, and must abort immediately with
             403 Forbidden, or we will start a redirect loop
           * checks if `params` matches the token we set (and saved in
             ``flask.session``) when redirecting to Raven
-            (preventing replaying successful authentications from other
-            sites onto ours)
           * checks if the authentication method used is permitted by `aauth`
             and user-interaction respected `iact` - if not, abort with
             400 Bad Request

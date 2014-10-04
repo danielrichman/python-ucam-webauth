@@ -15,21 +15,26 @@ response:
   Not checking `url` will allow another evil website administrator to replay
   responses produced by Raven log-ins to her website to yours, thereby
   impersonating someone else.
+  (Using params as a token (below) doesn't help, since the attacker can
+  obtain a matching `(cookie, params)` pair from you first, and then ask
+  the victim to authenticate with `params` set to that value.)
 
   Some frameworks, notably Werkzeug, deduce the current hostname from
   the `Host` or `X-Forwarded-Host` headers (with the latter taking
-  precedence). If you are not checking the `Host` header / doing virtual
-  hosting *and* wiping the `X-Forwarded-Host` header in your web server,
-  you need to check the host against a whitelist in your application.
+  precedence).
+  
+  .. seealso::
+        `werkzeug#609 <https://github.com/mitsuhiko/werkzeug/issues/609>`_ and
+        `issue 5 <https://github.com/danielrichman/python-raven/issues/5>`_
 
-  This may be used to whitelist domains in Flask::
+  This technique may be used to whitelist domains in Flask::
 
       class R(flask.Request):
           trusted_hosts = {'www.danielrichman.co.uk'}
       app.request_class = R
 
-  You may forgo checking `url` *if* you instead use a token in `params`
-  as described below.
+  Alternatively, you could sanitise `Host` and `X-Forwarded-Host` in your
+  web-server.
 
 * check `issue` is within an acceptable range of *now*
 
@@ -45,16 +50,14 @@ response:
 Using params as a token
 -----------------------
 
-If checking `url` (above) is a pain, you could:
+You might like to set a random nonce in the Request's `params`, save
+a hashed (with secret salt) or signed copy in a cookie, and check that they
+match in the `Response`.
 
-* generate a random string just before you redirect to Raven
-* set a cookie on the client with that string
-* include that string as `params` in the :class:`ucam_webauth.Request`
-* check that they match in the :class:`ucam_webauth.Response`
+This is *not* a substitute for any of the checks above, but does make the
+`WLS-Response` values in your web server access logs useless.
 
-The principle is similar to that of an CSRF token for submitting forms.
-
-This is what :class:`ucam_webauth.flask_glue.AuthDecorator` does.
+:class:`ucam_webauth.flask_glue.AuthDecorator` does this.
 
 Signing keys
 ------------
@@ -62,8 +65,9 @@ Signing keys
 The keys used by Raven to sign responses are included with `python-raven`.
 I took care in retrieving them, however you should trust neither me nor the
 method by which you installed this package.
-**You should check that the copies of the certificates you have are
-correct / match the files at the links below**.
+*You should check that the copies of the certificates you have are
+correct / match the files at the links below* (and audit the code you've
+just installed, I guess).
 
 * ``pubkey2`` from `<https://raven.cam.ac.uk/project/keys/>`_
 * ``pubkey901`` from `<https://raven.cam.ac.uk/project/keys/demo_server/>`_

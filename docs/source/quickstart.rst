@@ -6,10 +6,17 @@ Using the flask decorator
 
 ::
 
+    import flask
     from flask import Flask
     from raven.flask_glue import AuthDecorator
 
+    # Werkzeug deduces the hostname from the 'Host' or
+    # 'X-Forwarded-Host' headers, so we need a whitelist
+    class R(flask.Request):
+        trusted_hosts = {'your-domain.com', 'www.your-domain.com'}
+
     app = Flask(__name__)
+    app.request_class = R
     app.secret_key = "a secret key"
     auth_decorator = AuthDecorator(desc="My website")
 
@@ -26,10 +33,17 @@ Requiring all flask requests be authenticated
 
 ::
 
+    import flask
     from flask import Flask
     from raven.flask_glue import AuthDecorator
 
+    # Werkzeug deduces the hostname from the 'Host' or
+    # 'X-Forwarded-Host' headers, so we need a whitelist
+    class R(flask.Request):
+        trusted_hosts = {'your-domain.com', 'www.your-domain.com'}
+
     app = Flask(__name__)
+    app.request_class = R
     app.secret_key = "a secret key"
     auth_decorator = AuthDecorator()
 
@@ -98,9 +112,8 @@ Integrating with existing authentication or session management
 
         # checking url, issue, iact and aauth is very important!
         # Werkzeug deduces the hostname from the 'Host' or
-        # 'X-Forwarded-Host' headers. A whitelist is safest, or you
-        # may like to pass a secret in `params`.
-        request.trusted_hosts = {'www.danielrichman.co.uk'}
+        # 'X-Forwarded-Host' headers, so we need a whitelist
+        request.trusted_hosts = {'www.your-domain.com', 'your-domain.com'}
         if r.url != request.base_url:
             print "Bad url"
             abort(400)
