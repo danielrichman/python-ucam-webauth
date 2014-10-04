@@ -185,18 +185,38 @@ class AuthDecorator(object):
     def _state(self):
         return session.get("_ucam_webauth", {}).get("state", {})
 
-    def _prop_helper(self, name):
-        return self._state.get(name, None)
+    @_state.setter
+    def _state(self, new):
+        if "_ucam_webauth" not in session:
+            session["_ucam_webauth"] = {}
+        session["_ucam_webauth"]["state"] = new
+
+    @_state.deleter
+    def _state(self):
+        if "_ucam_webauth" in session:
+            d = session["_ucam_webauth"]
+            if "state" in d:
+                del d["state"]
+
+    @property
+    def _params_token(self):
+        return session.get("_ucam_webauth", {}).get("params_token", None)
+
+    @_params_token.setter
+    def _params_token(self, new):
+        if "_ucam_webauth" not in session:
+            session["_ucam_webauth"] = {}
+        session["_ucam_webauth"]["params_token"] = new
 
     @property
     def principal(self):
         """The current principal, or ``None``"""
-        return self._prop_helper("principal")
+        return self._state.get("principal")
 
     @property
     def ptags(self):
         """The current ptags, or ``None``"""
-        ptags = self._prop_helper("ptags")
+        ptags = self._state.get("ptags")
         if ptags is not None:
             ptags = frozenset(ptags)
         return ptags
@@ -210,17 +230,17 @@ class AuthDecorator(object):
         the :class:`datetime` object used by :class:`ucam_webauth.Response`.
         (`issue` is ``None`` if there is no current session.)
         """
-        return self._prop_helper("issue")
+        return self._state.get("issue")
 
     @property
     def life(self):
         """life of the last WLS response (:class:`int` seconds), or ``None``"""
-        return self._prop_helper("life")
+        return self._state.get("life")
 
     @property
     def last(self):
         """Time (:class:`int` unix timestamp) of the last decorated request"""
-        return self._prop_helper("last")
+        return self._state.get("last")
 
     @property
     def expires(self):
@@ -250,9 +270,8 @@ class AuthDecorator(object):
 
     def logout(self):
         """Clear the auth., and return a redirect to the WLS' logout page"""
-        if self._state != {}:
-            session.modified = True
-            del session["_ucam_webauth"]["state"]
+        session.modified = True
+        del self._state
         return redirect(self.logout_url, code=303)
 
     def before_request(self):
@@ -365,7 +384,7 @@ class AuthDecorator(object):
         if url_without_response is None:
             abort(400)
 
-        token = session.get("_ucam_webauth", {}).get("params_token")
+        token = self._params_token
         if token is None or response.params != token:
             logger.warning("params token mismatch: session=%s response=%s",
                            token, response.params)
@@ -387,14 +406,14 @@ class AuthDecorator(object):
                 logger.debug("new session")
                 self.session_new()
 
-            session["_ucam_webauth"]["state"] = \
+            self._state = \
                     {"principal": response.principal,
                      "ptags": list(response.ptags),
                      "issue": issue, "life": response.life,
                      "last": time()}
 
         else:
-            session["_ucam_webauth"]["state"] = {"response_failure": True}
+            self._state = {"response_failure": True}
 
         return redirect(url_without_response, code=303)
 
@@ -470,17 +489,13 @@ class AuthDecorator(object):
 
     def _redirect_to_wls(self):
         """Create a request and return a redirect to the WLS"""
-        if "_ucam_webauth" not in session:
-            session["_ucam_webauth"] = {}
-        if "params_token" not in session["_ucam_webauth"]:
-            session["_ucam_webauth"]["params_token"] = \
+        if self._params_token is None:
+            self._params_token = \
                     base64.b64encode(os.urandom(18)).decode("ascii")
-
-        token = session["_ucam_webauth"]["params_token"]
 
         req = self.request_class(url=request.url, desc=self.desc,
                                  aauth=self.aauth, iact=self.iact,
-                                 msg=self.msg, params=token)
+                                 msg=self.msg, params=self._params_token)
         return redirect(str(req), code=303)
 
     def _get_expires(self, state):
