@@ -398,7 +398,7 @@ class AuthDecorator(object):
 
         """
 
-        url_without_response = self._check_url(response.url)
+        url_without_response = self._check_url(response)
         if url_without_response is None:
             abort(400)
 
@@ -435,7 +435,7 @@ class AuthDecorator(object):
 
         return redirect(url_without_response, code=303)
 
-    def _check_url(self, wls_response_url):
+    def _check_url(self, response):
         """
         Check if the response from the WLS was intended for us
 
@@ -450,6 +450,7 @@ class AuthDecorator(object):
                                "Host/X-Forwarded-Host headers and pass "
                                "can_trust_request_host = True")
 
+        wls_response_url = response.url
         actual_url = request.url
 
         # note: mod_ucam_webauth simply strips everything up to a ?
@@ -475,9 +476,21 @@ class AuthDecorator(object):
                          response_part, request.args["WLS-Response"])
             return None
 
+        if response.ver == 1:
+            # protocol version 1 strips everything from ? from the url
+            # when redirecting; clicking the Cancel button is observed
+            # to cause a version-1 response with this behaviour
+            start = wls_response_url.find("?")
+            if start > 0:
+                expected_response_url = wls_response_url[:start]
+            else:
+                expected_response_url = wls_response_url
+        else:
+            expected_response_url = wls_response_url
+
         # finally check that they agree.
         actual_url = actual_url[:start]
-        if wls_response_url != actual_url:
+        if expected_response_url != actual_url:
             logger.debug("response.url did not match url visited "
                          "(replay of WLS-Response to other website?) "
                          "response.url=%r request.url=%r",
