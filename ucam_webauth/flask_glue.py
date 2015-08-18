@@ -477,22 +477,20 @@ class AuthDecorator(object):
                          response_part, request.args["WLS-Response"])
             return None
 
+        # chop off the WLS-Response
+        actual_url = actual_url[:start]
+
         if response.ver == 1:
-            start = wls_response_url.find("?")
-            if start > 0:
-                expected_response_url = wls_response_url[:start]
-            else:
-                expected_response_url = wls_response_url
+            expected_response_url, _, _ = wls_response_url.partition("?")
         else:
             expected_response_url = wls_response_url
 
         # finally check that they agree.
-        actual_url = actual_url[:start]
         if expected_response_url != actual_url:
             logger.debug("response.url did not match url visited "
                          "(replay of WLS-Response to other website?) "
-                         "response.url=%r request.url=%r",
-                         wls_response_url, actual_url)
+                         "expected_response_url=%r actual_url=%r",
+                         expected_response_url, actual_url)
             return None
 
         return wls_response_url
