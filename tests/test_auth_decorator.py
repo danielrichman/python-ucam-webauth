@@ -998,3 +998,9 @@ class TestAuthDecorator(object):
 
             assert_raises(RuntimeError,
                           client.get, "/decorated", follow_redirects=True)
+
+    # Check that the v1 branch doesn't break anything.
+    # I'm tempted to say that a ver=1 successful response should be rejected, but
+    # I'm not sure.
+    def test_auth_v1(self):
+        self.check_auth(TestRig(), ver=1)
