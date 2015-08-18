@@ -453,12 +453,13 @@ class AuthDecorator(object):
         wls_response_url = response.url
         actual_url = request.url
 
-        # note: mod_ucam_webauth simply strips everything up to a ?
-        # from both urls and compares.
+        # See the docs (misc/Response URLs for Cancels) for comments on how
+        # the WLS constructs the URL to which the user is redirected after a
+        # request.
+        # Essentially, it either appends (?|&)WLS-Response=... to the URL
+        # in the request, or appends ?WLS-Response=... to the URL in the
+        # request with the query part removed.
 
-        # see waa2wls-protocol.txt - the WLS appends (?|&)WLS-Response=
-        # so, removing that from the end of the string should recover
-        # the exact url sent in the request
         start = max(actual_url.rfind("?WLS-Response="),
                     actual_url.rfind("&WLS-Response="))
         if start == -1:
@@ -477,9 +478,6 @@ class AuthDecorator(object):
             return None
 
         if response.ver == 1:
-            # protocol version 1 strips everything from ? from the url
-            # when redirecting; clicking the Cancel button is observed
-            # to cause a version-1 response with this behaviour
             start = wls_response_url.find("?")
             if start > 0:
                 expected_response_url = wls_response_url[:start]
