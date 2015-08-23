@@ -42,7 +42,7 @@ response settings (default ptags and signing keys).
 from __future__ import unicode_literals
 
 __name__ = "raven"
-__version__ = "0.7"
+__version__ = "0.8.1"
 __author__ = "Daniel Richman"
 __copyright__ = "Copyright 2013 Daniel Richman"
 __email__ = "main@danielrichman.co.uk"

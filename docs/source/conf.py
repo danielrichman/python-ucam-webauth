@@ -22,7 +22,7 @@ master_doc = 'index'
 
 project = u'python-raven'
 copyright = u'2013, Daniel Richman'
-version = release = '0.5.1'
+version = release = '0.8.1'
 
 exclude_patterns = []
 pygments_style = 'sphinx'
