@@ -8,6 +8,7 @@ Contents:
 
    quickstart
    security
+   misc
    modules
 
 Links

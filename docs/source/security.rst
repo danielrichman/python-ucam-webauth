@@ -36,6 +36,9 @@ response:
   Alternatively, you could sanitise `Host` and `X-Forwarded-Host` in your
   web-server.
 
+  If you might have query parameters in your `url`, you need to take care to
+  handle negative respones from the WLS. See :ref:`cancel_url`.
+
 * check `issue` is within an acceptable range of *now*
 
   ... lest someone replay an old response to log in again

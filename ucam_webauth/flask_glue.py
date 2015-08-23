@@ -398,7 +398,7 @@ class AuthDecorator(object):
 
         """
 
-        url_without_response = self._check_url(response.url)
+        url_without_response = self._check_url(response)
         if url_without_response is None:
             abort(400)
 
@@ -435,7 +435,7 @@ class AuthDecorator(object):
 
         return redirect(url_without_response, code=303)
 
-    def _check_url(self, wls_response_url):
+    def _check_url(self, response):
         """
         Check if the response from the WLS was intended for us
 
@@ -450,14 +450,16 @@ class AuthDecorator(object):
                                "Host/X-Forwarded-Host headers and pass "
                                "can_trust_request_host = True")
 
+        wls_response_url = response.url
         actual_url = request.url
 
-        # note: mod_ucam_webauth simply strips everything up to a ?
-        # from both urls and compares.
+        # See the docs (misc/Response URLs for Cancels) for comments on how
+        # the WLS constructs the URL to which the user is redirected after a
+        # request.
+        # Essentially, it either appends (?|&)WLS-Response=... to the URL
+        # in the request, or appends ?WLS-Response=... to the URL in the
+        # request with the query part removed.
 
-        # see waa2wls-protocol.txt - the WLS appends (?|&)WLS-Response=
-        # so, removing that from the end of the string should recover
-        # the exact url sent in the request
         start = max(actual_url.rfind("?WLS-Response="),
                     actual_url.rfind("&WLS-Response="))
         if start == -1:
@@ -475,13 +477,20 @@ class AuthDecorator(object):
                          response_part, request.args["WLS-Response"])
             return None
 
-        # finally check that they agree.
+        # chop off the WLS-Response
         actual_url = actual_url[:start]
-        if wls_response_url != actual_url:
+
+        if response.ver == 1:
+            expected_response_url, _, _ = wls_response_url.partition("?")
+        else:
+            expected_response_url = wls_response_url
+
+        # finally check that they agree.
+        if expected_response_url != actual_url:
             logger.debug("response.url did not match url visited "
                          "(replay of WLS-Response to other website?) "
-                         "response.url=%r request.url=%r",
-                         wls_response_url, actual_url)
+                         "expected_response_url=%r actual_url=%r",
+                         expected_response_url, actual_url)
             return None
 
         return wls_response_url

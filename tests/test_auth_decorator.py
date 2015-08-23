@@ -523,6 +523,40 @@ class TestAuthDecorator(object):
             r = client.get("/decorated")
             assert r.status_code == 401
 
+    # Sadly, the real world raven still uses version 1 for negative responses
+    def test_handles_v1_removing_query_parameters(self):
+        rig = TestRig()
+
+        with rig as (client, wls, views):
+            r = client.get("/decorated?special")
+            assert r.status_code == 303
+            url, query = r.headers["location"].split("?")
+
+        with rig as (client, wls, views):
+            u = "http://localhost/decorated?special"
+            status = ucam_webauth.STATUS_CANCELLED
+            wls.expect({"url": u}, make_response(ver=1, status=status, url=u))
+
+            r = client.get(url, query_string=query)
+            assert r.status_code == 302
+            url, query = r.headers["location"].split("?")
+            assert url == "http://localhost/decorated"
+
+        # with a v1 response, the WLS actually deletes other query parameters
+        assert query.startswith("special&WLS-Response")
+        query = query[len("special&"):]
+
+        with rig as (client, wls, views):
+            r = client.get("/decorated", query_string=query)
+            assert r.status_code == 303
+            # it should restore the query parameter:
+            assert r.headers["location"] == "http://localhost/decorated?special"
+
+        with rig as (client, wls, views):
+            # and finally give us a 401
+            r = client.get("/decorated?special")
+            assert r.status_code == 401
+
     def test_require_default(self):
         self.check_auth(TestRig(), principal="something",
                         ptags=set(["current"]))
@@ -632,9 +666,21 @@ class TestAuthDecorator(object):
 
     def test_checks_url(self):
         rig = TestRig()
+        # Modify response.url: it should cause a mis-match
         self.check_auth_abort(rig, 400, url="http://localhost/other")
         self.check_auth_abort(rig, 400, url="http://other/decorated")
         self.check_auth_abort(rig, 400, url="http://localhost/decorated?test")
+
+        rig = TestRig()
+
+        with rig as (client, wls, views):
+            # keep the response url as before, but modify the request url so
+            # that they do not match
+            url = "http://localhost/decorated?special"
+            wls.expect({"url": url}, make_response(principal="djr61"))
+
+            response = client.get("/decorated?special", follow_redirects=True)
+            assert response.status_code == 400
 
     def test_doesnt_nuke_session(self):
         rig = TestRig()
@@ -952,3 +998,9 @@ class TestAuthDecorator(object):
 
             assert_raises(RuntimeError,
                           client.get, "/decorated", follow_redirects=True)
+
+    # Check that the v1 branch doesn't break anything.
+    # I'm tempted to say that a ver=1 successful response should be rejected, but
+    # I'm not sure.
+    def test_auth_v1(self):
+        self.check_auth(TestRig(), ver=1)
