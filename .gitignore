@@ -1,4 +1,4 @@
 *.pyc
 dist
 build
-python_raven.egg-info
+python_ucam_webauth.egg-info

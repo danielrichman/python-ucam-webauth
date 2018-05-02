@@ -5,4 +5,4 @@ python module documentation
    :maxdepth: 4
 
    ucam_webauth
-   raven
+   ucam_webauth_raven

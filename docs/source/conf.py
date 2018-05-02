@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 
 import sys
+import os
+
+sys.path.append(os.path.append(os.path.dirname(__file__), "..", ".."))
 
 # mock out the external C module, since it might not be built,
 # and isn't documented. The RSA objects returned are documented manually
@@ -20,14 +23,14 @@ extensions = ['sphinx.ext.autodoc', 'sphinx.ext.viewcode']
 source_suffix = '.rst'
 master_doc = 'index'
 
-project = u'python-raven'
+project = u'ucam-webauth'
 copyright = u'2013, Daniel Richman'
-version = release = '0.8.1'
+version = release = '0.9.0'
 
 exclude_patterns = []
 pygments_style = 'sphinx'
 html_theme = 'default'
-html_use_opensearch = 'http://pythonhosted.org/python-raven/'
+html_use_opensearch = 'https://python-ucam-webauth.readthedocs.io/en/latest/'
 htmlhelp_basename = 'python-ravendoc'
 
 autodoc_member_order = "bysource"

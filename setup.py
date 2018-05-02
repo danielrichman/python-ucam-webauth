@@ -10,10 +10,10 @@ rsamodule = Extension('ucam_webauth.rsa',
                       libraries=["ssl", "crypto"])
 
 setup(
-    name = "python-raven",
-    version = "0.8.1",
-    packages = ["raven", "ucam_webauth"],
-    package_data = {"raven": ["keys/pubkey*"]},
+    name = "python-ucam-webauth",
+    version = "0.9.0",
+    packages = ["ucam_webauth"],
+    package_data = {"ucam_webauth": ["raven/keys/pubkey*"]},
     ext_modules = [rsamodule],
     install_requires = ["setuptools"],
     extras_require = {"flask_glue": ["Flask"]},
@@ -26,7 +26,7 @@ setup(
     long_description = long_description,
     license="GNU Lesser General Public License Version 3",
     keywords = "Raven Cambridge ucam-webauth",
-    url = "http://github.com/danielrichman/python-raven",
+    url = "http://github.com/danielrichman/python-ucam-webauth",
 
     classifiers = [
         "Development Status :: 4 - Beta",

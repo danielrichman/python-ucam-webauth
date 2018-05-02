@@ -8,9 +8,11 @@ if sys.version_info[0] >= 3:
 else:
     from urlparse import parse_qs
 
-from ucam_webauth import Request, ATYPE_PWD
-import raven
-import raven.demoserver
+import ucam_webauth
+import ucam_webauth.raven
+import ucam_webauth.raven.demoserver
+
+from ucam_webauth import Request, ATYPE_PWD, raven
 
 
 class TestRequest(object):

@@ -1,5 +1,5 @@
-python-raven documentation
-==========================
+python-ucam-webauth documentation
+=================================
 
 Contents:
 
@@ -14,9 +14,9 @@ Contents:
 Links
 -----
 
-* `source on github <https://github.com/danielrichman/python-raven>`_
-* `documentation <https://pythonhosted.org/python-raven>`_
-* `pypi page <https://pypi.python.org/pypi/python-raven>`_
+* `source on github <https://github.com/danielrichman/python-ucam-webauth>`_
+* `documentation <https://python-ucam-webauth.readthedocs.io/en/latest/>`_
+* `pypi page <https://pypi.python.org/pypi/python-ucam-webauth>`_
 * `Raven documentation <https://raven.cam.ac.uk/project/>`_
 * `WAA2WLS protocol <https://raven.cam.ac.uk/project/waa2wls-protocol.txt>`_
 

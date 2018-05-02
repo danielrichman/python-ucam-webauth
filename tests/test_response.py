@@ -16,8 +16,10 @@ from unittest.case import SkipTest
 from nose.tools import assert_raises
 
 import ucam_webauth
-import raven
-import raven.demoserver
+import ucam_webauth.raven
+import ucam_webauth.raven.demoserver
+
+from ucam_webauth import raven
 
 
 class FakeRSA(object):

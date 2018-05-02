@@ -25,7 +25,7 @@ response:
   
   .. seealso::
         `werkzeug#609 <https://github.com/mitsuhiko/werkzeug/issues/609>`_ and
-        `issue 5 <https://github.com/danielrichman/python-raven/issues/5>`_
+        `issue 5 <https://github.com/danielrichman/python-ucam-webauth/issues/5>`_
 
   This technique may be used to whitelist domains in Flask::
 
@@ -65,9 +65,9 @@ This is *not* a substitute for any of the checks above, but does make the
 Signing keys
 ------------
 
-The keys used by Raven to sign responses are included with `python-raven`.
-I took care in retrieving them, however you should trust neither me nor the
-method by which you installed this package.
+The keys used by Raven to sign responses are included with
+`python-ucam-webauth`. I took care in retrieving them, however you should trust
+neither me nor the method by which you installed this package.
 *You should check that the copies of the certificates you have are
 correct / match the files at the links below* (and audit the code you've
 just installed, I guess).

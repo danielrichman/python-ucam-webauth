@@ -6,9 +6,9 @@ import logging
 from datetime import datetime
 
 import ucam_webauth
-import raven
-import raven.demoserver
-import raven.flask_glue
+import ucam_webauth.raven
+import ucam_webauth.raven.demoserver
+import ucam_webauth.raven.flask_glue
 
 import flask
 from flask import Flask, request, render_template, redirect, \
@@ -26,9 +26,10 @@ app.add_template_global(repr, name="repr")
 app.add_template_global(getattr, name="getattr")
 
 modules = {"ucam_webauth": ucam_webauth,
-           "raven": raven, "raven.demoserver": raven.demoserver}
+           "ucam_webauth.raven": ucam_webauth.raven, 
+           "ucam_webauth.raven.demoserver": raven.demoserver}
 
-auth_decorator = raven.flask_glue.AuthDecorator()
+auth_decorator = ucam_webauth.raven.flask_glue.AuthDecorator()
 
 @app.route("/")
 def home():
@@ -112,12 +113,12 @@ def integration_login_username():
 @app.route("/integration/login_raven")
 def integration_login_raven():
     u = url_for("integration_login_raven_response", _external=True)
-    r = raven.Request(url=u, desc="python-raven simple_demo")
+    r = ucam_webauth.raven.Request(url=u, desc="python-ucam-webauth raven simple_demo")
     return redirect(str(r))
 
 @app.route("/integration/login_raven/response")
 def integration_login_raven_response():
-    r = raven.Response(request.args["WLS-Response"])
+    r = ucam_webauth.raven.Response(request.args["WLS-Response"])
     if r.url != request.base_url:
         print("Bad url")
         abort(400)
@@ -146,7 +147,7 @@ def integration_logout():
     del session["user"]
     del session["auth"]
     if request.args.get("also_raven", False):
-        return redirect(raven.RAVEN_LOGOUT)
+        return redirect(ucam_webauth.raven.RAVEN_LOGOUT)
     else:
         return redirect(url_for("integration_home"))
 

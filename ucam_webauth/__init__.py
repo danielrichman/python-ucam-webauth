@@ -1,25 +1,26 @@
 # Copyright 2013 Daniel Richman
 #
-# This file is part of python-raven
+# This file is part of python-ucam-webauth
 #
-# python-raven is free software: you can redistribute it and/or modify
+# python-ucam-webauth is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
-# python-raven is distributed in the hope that it will be useful,
+# python-ucam-webauth is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with python-raven.  If not, see <http://www.gnu.org/licenses/>.
+# along with python-ucam-webauth.  If not, see <http://www.gnu.org/licenses/>.
 
 """
 The ucam_webauth module implements version 3 of the WAA to WLS protocol.
 
 It is not set up to talk to a specific WAA (i.e., Raven), and subclassing
-this modules' classes is required to make it functional (see :mod:`raven`).
+this modules' classes is required to make it functional. In particular, you
+probably want to use :mod:`ucam_webauth.raven`.
 
 The protocol is implemented as defined at
 `<https://raven.cam.ac.uk/project/waa2wls-protocol.txt>`_
@@ -62,7 +63,7 @@ and more information can be found at `<https://raven.cam.ac.uk/project/>`_.
 from __future__ import unicode_literals
 
 __name__ = "ucam_webauth"
-__version__ = "0.8.1"
+__version__ = "0.9.0"
 __author__ = "Daniel Richman"
 __copyright__ = "Copyright 2013 Daniel Richman"
 __email__ = "main@danielrichman.co.uk"

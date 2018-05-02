@@ -8,7 +8,7 @@ Using the flask decorator
 
     import flask
     from flask import Flask
-    from raven.flask_glue import AuthDecorator
+    from ucam_webauth.raven.flask_glue import AuthDecorator
 
     # Werkzeug deduces the hostname from the 'Host' or
     # 'X-Forwarded-Host' headers, so we need a whitelist
@@ -35,7 +35,7 @@ Requiring all flask requests be authenticated
 
     import flask
     from flask import Flask
-    from raven.flask_glue import AuthDecorator
+    from ucam_webauth.raven.flask_glue import AuthDecorator
 
     # Werkzeug deduces the hostname from the 'Host' or
     # 'X-Forwarded-Host' headers, so we need a whitelist
@@ -61,7 +61,7 @@ Manual request building and response parsing
 
 To create requests::
 
-    >>> from raven import Request, Response
+    >>> from ucam_webauth.raven import Request, Response
     >>> r = Request(url="http://host/response/path", desc="My website")
     >>> print str(r)
     https://raven.cam.ac.uk/auth/authenticate.html?url=http%3A%2F%2Fhost%2Fresponse%2Fpath&ver=3&desc=My+website
@@ -89,7 +89,7 @@ Integrating with existing authentication or session management
 
 .. code-block:: python
 
-    import raven
+    from ucam_webauth import raven
     from datetime import datetime
     from flask import Flask, session, flash, url_for, redirect, abort, request
 
@@ -154,7 +154,7 @@ See also
 --------
 
 The included `simple_demo flask app
-<https://github.com/danielrichman/python-raven/tree/master/simple_demo>`_
+<https://github.com/danielrichman/python-ucam-webauth/tree/master/simple_demo>`_
 serves as a far more comprehensive example, including:
 
 * decorator usage
