@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 
 import sys
-import os
+import os.path
 
-sys.path.append(os.path.append(os.path.dirname(__file__), "..", ".."))
+# We need to be able to import ourselves to generate module docs
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
+
 
 # mock out the external C module, since it might not be built,
 # and isn't documented. The RSA objects returned are documented manually
