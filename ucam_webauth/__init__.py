@@ -46,7 +46,7 @@ and more information can be found at `<https://raven.cam.ac.uk/project/>`_.
 from __future__ import unicode_literals
 
 __name__ = "ucam_webauth"
-__version__ = "0.9.1"
+__version__ = "0.9.2"
 __author__ = "Daniel Richman"
 __copyright__ = "Copyright 2013 Daniel Richman"
 __email__ = "main@danielrichman.co.uk"

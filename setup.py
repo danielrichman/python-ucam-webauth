@@ -11,7 +11,7 @@ rsamodule = Extension('ucam_webauth.rsa',
 
 setup(
     name = "python-ucam-webauth",
-    version = "0.9.1",
+    version = "0.9.2",
     packages = ["ucam_webauth", "ucam_webauth.raven"],
     package_data = {"ucam_webauth": ["raven/keys/pubkey*"]},
     ext_modules = [rsamodule],

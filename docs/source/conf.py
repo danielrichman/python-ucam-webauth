@@ -27,7 +27,7 @@ master_doc = 'index'
 
 project = u'ucam-webauth'
 copyright = u'2013, Daniel Richman'
-version = release = '0.9.1'
+version = release = '0.9.2'
 
 exclude_patterns = []
 pygments_style = 'sphinx'
