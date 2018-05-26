@@ -7,7 +7,7 @@ Python dependencies
 License
 =======
 
-GNU LGPLv3, see COPYING.lesser
+BSD-2-Clause, see COPYING.
 
 `Documentation <https://python-ucam-webauth.readthedocs.io/en/latest/>`_
 ========================================================================

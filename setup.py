@@ -24,14 +24,14 @@ setup(
     author_email = "main@danielrichman.co.uk",
     description = "Ucam-webauth and Raven application agent in Python",
     long_description = long_description,
-    license="GNU Lesser General Public License Version 3",
+    license="BSD-2-Clause",
     keywords = "Raven Cambridge ucam-webauth",
     url = "http://github.com/danielrichman/python-ucam-webauth",
 
     classifiers = [
         "Development Status :: 4 - Beta",
         "Intended Audience :: Developers",
-        "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+        "License :: OSI Approved :: BSD License",
         "Operating System :: OS Independent",
         "Framework :: Flask",
         "Topic :: Internet :: WWW/HTTP :: Dynamic Content :: "

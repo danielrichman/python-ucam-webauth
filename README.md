@@ -16,7 +16,7 @@
 
 ## License
 
-GNU LGPLv3, see COPYING
+BSD-2-Clause, see COPYING
 
 ## Documentation
 
