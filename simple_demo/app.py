@@ -27,7 +27,7 @@ app.add_template_global(getattr, name="getattr")
 
 modules = {"ucam_webauth": ucam_webauth,
            "ucam_webauth.raven": ucam_webauth.raven, 
-           "ucam_webauth.raven.demoserver": raven.demoserver}
+           "ucam_webauth.raven.demoserver": ucam_webauth.raven.demoserver}
 
 auth_decorator = ucam_webauth.raven.flask_glue.AuthDecorator()
 
